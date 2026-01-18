@@ -8,9 +8,10 @@ import { MoodCalendar } from '@/components/MoodCalendar';
 import { PoetryCorner } from '@/components/PoetryCorner';
 import { StreakDisplay } from '@/components/StreakDisplay';
 import { QuestsList } from '@/components/QuestsList';
+import { YearlyStats } from '@/components/YearlyStats';
 import { Scroll, ChevronRight } from 'lucide-react';
 
-type NavView = 'dashboard' | 'quests' | 'poetry' | 'calendar';
+type NavView = 'dashboard' | 'quests' | 'poetry' | 'calendar' | 'yearly';
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<NavView>('dashboard');
@@ -139,6 +140,10 @@ const Index = () => {
                 </p>
               </div>
             </div>
+          )}
+
+          {currentView === 'yearly' && (
+            <YearlyStats year={2026} />
           )}
         </div>
       </main>

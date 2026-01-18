@@ -1,6 +1,6 @@
-import { LayoutDashboard, Scroll, BookOpen, Calendar, Settings } from 'lucide-react';
+import { LayoutDashboard, Scroll, BookOpen, Calendar, BarChart3, Settings } from 'lucide-react';
 
-type NavView = 'dashboard' | 'quests' | 'poetry' | 'calendar';
+type NavView = 'dashboard' | 'quests' | 'poetry' | 'calendar' | 'yearly';
 
 interface NavigationProps {
   currentView: NavView;
@@ -12,6 +12,7 @@ const navItems = [
   { id: 'quests' as const, label: 'Quests', icon: Scroll },
   { id: 'poetry' as const, label: 'Poetry', icon: BookOpen },
   { id: 'calendar' as const, label: 'Calendar', icon: Calendar },
+  { id: 'yearly' as const, label: 'Year Stats', icon: BarChart3 },
 ];
 
 export function Navigation({ currentView, onViewChange }: NavigationProps) {
