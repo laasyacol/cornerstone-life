@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { generateSampleData } from '@/lib/gameData';
+import { loadGameData } from '@/lib/dataLoader';
 import { Navigation } from '@/components/Navigation';
 import { PlayerCard } from '@/components/PlayerCard';
 import { DashboardStats } from '@/components/DashboardStats';
@@ -15,7 +15,7 @@ type NavView = 'dashboard' | 'quests' | 'poetry' | 'calendar' | 'yearly';
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<NavView>('dashboard');
-  const gameState = generateSampleData();
+  const gameState = loadGameData();
 
   const activeQuests = gameState.quests.filter(q => q.status === 'active').slice(0, 3);
 
