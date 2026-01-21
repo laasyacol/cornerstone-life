@@ -1,7 +1,7 @@
 // CORNER Game Data & Logic
 
 export const PLAYER = {
-  name: "Corner",
+  name: "Laasya",
   dob: new Date(2005, 8, 16), // September 16, 2005
   gameStart: new Date(2026, 0, 1), // January 1, 2026
 };
