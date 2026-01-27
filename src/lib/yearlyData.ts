@@ -1,6 +1,16 @@
-import { MoodState, QuestCategory } from './gameData';
+// ═══════════════════════════════════════════════════════════════════════════
+// LAASYA'S CORNER - Yearly Stats Calculator
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// This module calculates yearly statistics from the actual quest, mood, and
+// poem data loaded from the data files.
+// ═══════════════════════════════════════════════════════════════════════════
 
-// Generate 12 months of sample data for yearly view
+import { MoodState, QuestCategory, resolveQuest, type Quest, type DayMood, type Poem } from './gameData';
+import { loadGameData } from './dataLoader';
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
 export interface MonthlyStats {
   month: string;
   monthIndex: number;
@@ -28,8 +38,6 @@ export interface YearlyOverview {
   categoryBreakdown: Record<QuestCategory, { completed: number; failed: number; points: number }>;
 }
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
 function getDominantMood(distribution: Record<MoodState, number>): MoodState {
   let max = 0;
   let dominant: MoodState = 'neutral';
@@ -42,68 +50,130 @@ function getDominantMood(distribution: Record<MoodState, number>): MoodState {
   return dominant;
 }
 
+function getMonthFromDate(date: Date): number {
+  return date.getMonth();
+}
+
+function parseDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 export function generateYearlyData(year: number): YearlyOverview {
-  const monthlyStats: MonthlyStats[] = MONTHS.map((month, index) => {
-    // Simulate varying activity levels throughout year
-    const activityMultiplier = 1 + Math.sin((index - 2) * 0.5) * 0.3;
-    const baseQuests = Math.floor(15 * activityMultiplier);
-    const completed = Math.floor(baseQuests * (0.7 + Math.random() * 0.25));
-    const failed = Math.floor((baseQuests - completed) * Math.random());
-    
-    const basePoints = completed * (800 + Math.floor(Math.random() * 400));
-    const penalties = failed * (400 + Math.floor(Math.random() * 200));
-    
-    // Mood distribution with seasonal patterns
-    const moodDistribution: Record<MoodState, number> = {
-      'calm': Math.floor(8 + Math.random() * 10 + (index >= 4 && index <= 8 ? 5 : 0)),
-      'neutral': Math.floor(6 + Math.random() * 8),
-      'heavy-light': Math.floor(3 + Math.random() * 5),
-      'heavy-medium': Math.floor(2 + Math.random() * 4 + (index === 0 || index === 11 ? 3 : 0)),
-      'heavy-intense': Math.floor(1 + Math.random() * 2),
-    };
+  const gameState = loadGameData();
+  const { quests, moods, poems } = gameState;
 
-    const poems = Math.floor(1 + Math.random() * 4);
+  // Filter data by year
+  const yearQuests = quests.filter(q => q.deadline.getFullYear() === year);
+  const yearMoods = moods.filter(m => parseDate(m.date).getFullYear() === year);
+  const yearPoems = poems.filter(p => p.date.getFullYear() === year);
 
-    return {
-      month,
-      monthIndex: index,
-      questsCompleted: completed,
-      questsFailed: failed,
-      pointsEarned: basePoints,
-      pointsPenalized: penalties,
-      poemsWritten: poems,
-      moodDistribution,
-      dominantMood: getDominantMood(moodDistribution),
-    };
-  });
+  // Initialize monthly stats
+  const monthlyStats: MonthlyStats[] = MONTHS.map((month, index) => ({
+    month,
+    monthIndex: index,
+    questsCompleted: 0,
+    questsFailed: 0,
+    pointsEarned: 0,
+    pointsPenalized: 0,
+    poemsWritten: 0,
+    moodDistribution: {
+      'calm': 0,
+      'neutral': 0,
+      'heavy-light': 0,
+      'heavy-medium': 0,
+      'heavy-intense': 0,
+    },
+    dominantMood: 'neutral' as MoodState,
+  }));
 
-  const totalPointsEarned = monthlyStats.reduce((sum, m) => sum + m.pointsEarned, 0);
-  const totalPenalties = monthlyStats.reduce((sum, m) => sum + m.pointsPenalized, 0);
-  const totalQuestsCompleted = monthlyStats.reduce((sum, m) => sum + m.questsCompleted, 0);
-  const totalQuestsFailed = monthlyStats.reduce((sum, m) => sum + m.questsFailed, 0);
-  const totalPoems = monthlyStats.reduce((sum, m) => sum + m.poemsWritten, 0);
-
+  // Initialize category breakdown
   const categoryBreakdown: Record<QuestCategory, { completed: number; failed: number; points: number }> = {
-    survival: { completed: Math.floor(totalQuestsCompleted * 0.2), failed: Math.floor(totalQuestsFailed * 0.1), points: Math.floor(totalPointsEarned * 0.18) },
-    study: { completed: Math.floor(totalQuestsCompleted * 0.25), failed: Math.floor(totalQuestsFailed * 0.3), points: Math.floor(totalPointsEarned * 0.28) },
-    writing: { completed: Math.floor(totalQuestsCompleted * 0.12), failed: Math.floor(totalQuestsFailed * 0.15), points: Math.floor(totalPointsEarned * 0.14) },
-    skill: { completed: Math.floor(totalQuestsCompleted * 0.15), failed: Math.floor(totalQuestsFailed * 0.2), points: Math.floor(totalPointsEarned * 0.16) },
-    maintenance: { completed: Math.floor(totalQuestsCompleted * 0.13), failed: Math.floor(totalQuestsFailed * 0.15), points: Math.floor(totalPointsEarned * 0.12) },
-    emotional: { completed: Math.floor(totalQuestsCompleted * 0.08), failed: Math.floor(totalQuestsFailed * 0.05), points: Math.floor(totalPointsEarned * 0.07) },
-    rest: { completed: Math.floor(totalQuestsCompleted * 0.07), failed: Math.floor(totalQuestsFailed * 0.05), points: Math.floor(totalPointsEarned * 0.05) },
+    survival: { completed: 0, failed: 0, points: 0 },
+    study: { completed: 0, failed: 0, points: 0 },
+    writing: { completed: 0, failed: 0, points: 0 },
+    skill: { completed: 0, failed: 0, points: 0 },
+    maintenance: { completed: 0, failed: 0, points: 0 },
+    emotional: { completed: 0, failed: 0, points: 0 },
+    rest: { completed: 0, failed: 0, points: 0 },
   };
+
+  // Process quests
+  let totalPointsEarned = 0;
+  let totalPenalties = 0;
+  let totalQuestsCompleted = 0;
+  let totalQuestsFailed = 0;
+
+  for (const quest of yearQuests) {
+    const monthIndex = getMonthFromDate(quest.deadline);
+    const result = resolveQuest(quest);
+    const isCompleted = quest.status === 'completed' || quest.status === 'late-valid';
+    const isFailed = quest.status === 'failed';
+
+    if (isCompleted) {
+      monthlyStats[monthIndex].questsCompleted++;
+      monthlyStats[monthIndex].pointsEarned += result.earned;
+      totalQuestsCompleted++;
+      categoryBreakdown[quest.category].completed++;
+      categoryBreakdown[quest.category].points += result.earned;
+    }
+
+    if (isFailed) {
+      monthlyStats[monthIndex].questsFailed++;
+      monthlyStats[monthIndex].pointsPenalized += result.penalty;
+      totalQuestsFailed++;
+      categoryBreakdown[quest.category].failed++;
+    }
+
+    totalPointsEarned += result.earned;
+    totalPenalties += result.penalty;
+  }
+
+  // Process moods
+  for (const mood of yearMoods) {
+    const monthIndex = parseDate(mood.date).getMonth();
+    monthlyStats[monthIndex].moodDistribution[mood.mood]++;
+  }
+
+  // Calculate dominant mood for each month
+  for (const stats of monthlyStats) {
+    stats.dominantMood = getDominantMood(stats.moodDistribution);
+  }
+
+  // Process poems
+  for (const poem of yearPoems) {
+    const monthIndex = getMonthFromDate(poem.date);
+    monthlyStats[monthIndex].poemsWritten++;
+  }
+
+  // Calculate totals
+  const totalPoems = yearPoems.length;
+  const netPoints = totalPointsEarned - totalPenalties;
+  const completionRate = totalQuestsCompleted + totalQuestsFailed > 0
+    ? Math.round((totalQuestsCompleted / (totalQuestsCompleted + totalQuestsFailed)) * 100)
+    : 0;
+
+  // Calculate longest streak from current streaks (simplified)
+  const longestStreak = Math.max(
+    gameState.streaks.dailyLog,
+    gameState.streaks.completion,
+    gameState.streaks.poetry
+  );
+
+  // Legacy points = any surplus over base annual points goal
+  const legacyPointsAdded = Math.max(0, netPoints);
 
   return {
     year,
     totalPointsEarned,
     totalPenalties,
-    netPoints: totalPointsEarned - totalPenalties,
-    legacyPointsAdded: Math.max(0, totalPointsEarned - totalPenalties - 200000), // Surplus becomes legacy
+    netPoints,
+    legacyPointsAdded,
     totalQuestsCompleted,
     totalQuestsFailed,
-    completionRate: Math.round((totalQuestsCompleted / (totalQuestsCompleted + totalQuestsFailed)) * 100),
+    completionRate,
     totalPoems,
-    longestStreak: Math.floor(15 + Math.random() * 30),
+    longestStreak,
     monthlyStats,
     categoryBreakdown,
   };
