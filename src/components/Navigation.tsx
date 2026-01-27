@@ -17,7 +17,7 @@ const navItems = [
 
 export function Navigation({ currentView, onViewChange }: NavigationProps) {
   return (
-    <nav className="w-64 min-h-screen bg-sidebar border-r border-sidebar-border p-4 flex flex-col">
+    <nav className="w-64 h-screen bg-sidebar border-r border-sidebar-border p-4 flex flex-col sticky top-0">
       {/* Logo */}
       <div className="mb-8 px-4">
         <h1 className="font-serif text-3xl text-foreground tracking-tight">CORNER</h1>

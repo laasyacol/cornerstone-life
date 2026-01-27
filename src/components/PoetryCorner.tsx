@@ -42,8 +42,8 @@ export function PoetryCorner({ poems }: PoetryCornerProps) {
         </div>
       </div>
 
-      {/* Poems Grid - Two Columns */}
-      <div className="grid md:grid-cols-2 gap-6">
+      {/* Poems - Single Column */}
+      <div className="space-y-6">
         {poems.map((poem) => (
           <article
             key={poem.id}
@@ -64,7 +64,7 @@ export function PoetryCorner({ poems }: PoetryCornerProps) {
               </div>
             </header>
             
-            <div className="font-serif text-foreground leading-relaxed whitespace-pre-line">
+            <div className="font-serif text-foreground leading-relaxed whitespace-pre-wrap">
               {poem.content}
             </div>
           </article>
