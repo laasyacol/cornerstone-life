@@ -1,5 +1,6 @@
 import { Poem } from '@/lib/gameData';
 import { Feather, Calendar } from 'lucide-react';
+import { formatPoemContent } from '@/lib/formatPoem';
 
 interface PoetryCornerProps {
   poems: Poem[];
@@ -65,7 +66,7 @@ export function PoetryCorner({ poems }: PoetryCornerProps) {
             </header>
             
             <div className="font-serif text-foreground leading-relaxed whitespace-pre-wrap">
-              {poem.content}
+              {formatPoemContent(poem.content)}
             </div>
           </article>
         ))}
