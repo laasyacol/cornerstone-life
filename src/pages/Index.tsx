@@ -9,14 +9,19 @@ import { PoetryCorner } from '@/components/PoetryCorner';
 import { StreakDisplay } from '@/components/StreakDisplay';
 import { QuestsList } from '@/components/QuestsList';
 import { YearlyStats } from '@/components/YearlyStats';
+import { SettingsView } from '@/components/SettingsView';
 import { WelcomeScreen } from '@/components/WelcomeScreen';
+import { PasswordScreen } from '@/components/PasswordScreen';
 import { Scroll, ChevronRight } from 'lucide-react';
 
-type NavView = 'dashboard' | 'quests' | 'poetry' | 'calendar' | 'yearly';
+type NavView = 'dashboard' | 'quests' | 'poetry' | 'calendar' | 'yearly' | 'settings';
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<NavView>('dashboard');
   const [showWelcome, setShowWelcome] = useState(true);
+  const [isUnlocked, setIsUnlocked] = useState(() => {
+    return sessionStorage.getItem('corner-unlocked') === 'true';
+  });
   const gameState = loadGameData();
 
   useEffect(() => {
@@ -29,8 +34,14 @@ const Index = () => {
 
   const activeQuests = gameState.quests.filter(q => q.status === 'active').slice(0, 3);
 
+  // Show welcome screen first
   if (showWelcome) {
     return <WelcomeScreen />;
+  }
+
+  // Then show password screen if not unlocked
+  if (!isUnlocked) {
+    return <PasswordScreen onUnlock={() => setIsUnlocked(true)} />;
   }
 
   return (
@@ -158,6 +169,10 @@ const Index = () => {
 
           {currentView === 'yearly' && (
             <YearlyStats year={2026} />
+          )}
+
+          {currentView === 'settings' && (
+            <SettingsView />
           )}
         </div>
       </main>
