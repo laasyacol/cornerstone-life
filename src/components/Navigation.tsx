@@ -1,6 +1,6 @@
 import { LayoutDashboard, Scroll, BookOpen, Calendar, BarChart3, Settings } from 'lucide-react';
 
-type NavView = 'dashboard' | 'quests' | 'poetry' | 'calendar' | 'yearly';
+type NavView = 'dashboard' | 'quests' | 'poetry' | 'calendar' | 'yearly' | 'settings';
 
 interface NavigationProps {
   currentView: NavView;
@@ -13,6 +13,7 @@ const navItems = [
   { id: 'poetry' as const, label: 'Poetry', icon: BookOpen },
   { id: 'calendar' as const, label: 'Calendar', icon: Calendar },
   { id: 'yearly' as const, label: 'Year Stats', icon: BarChart3 },
+  { id: 'settings' as const, label: 'Settings', icon: Settings },
 ];
 
 export function Navigation({ currentView, onViewChange }: NavigationProps) {
@@ -40,11 +41,7 @@ export function Navigation({ currentView, onViewChange }: NavigationProps) {
 
       {/* Footer */}
       <div className="pt-4 border-t border-sidebar-border">
-        <button className="nav-item w-full opacity-60 hover:opacity-100">
-          <Settings className="w-5 h-5" />
-          <span>Settings</span>
-        </button>
-        <p className="text-xs text-muted-foreground text-center mt-4">
+        <p className="text-xs text-muted-foreground text-center">
           Game Start: Jan 1, 2026
         </p>
       </div>
