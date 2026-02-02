@@ -4,6 +4,7 @@
 //
 // This module loads data from your personal data files and transforms it
 // into the GameState format. It also auto-calculates streaks and points.
+// Data is persisted locally in a "cornerstone" file for offline desktop use.
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { MY_QUESTS, type RawQuest } from '@/data/quests';
@@ -11,6 +12,7 @@ import { MY_MOODS, type RawMood } from '@/data/moods';
 import { MY_POEMS, type RawPoem } from '@/data/poems';
 import type { Quest, DayMood, Poem, GameState } from '@/lib/gameData';
 import { resolveQuest } from '@/lib/gameData';
+import { saveCornerstoneData, loadCornerstoneData, hasCornerstoneData } from '@/lib/storage';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Date Helpers
@@ -199,7 +201,30 @@ function calculatePoetryStreak(poems: Poem[]): number {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function loadGameData(): GameState {
-  // Transform raw data
+  // Check if we have saved cornerstone data
+  if (hasCornerstoneData()) {
+    const stored = loadCornerstoneData();
+    if (stored) {
+      // Calculate streaks from stored data
+      const streaks = {
+        dailyLog: calculateDailyLogStreak(stored.moods),
+        completion: calculateCompletionStreak(stored.quests),
+        poetry: calculatePoetryStreak(stored.poems),
+      };
+
+      return {
+        currentYear: new Date().getFullYear(),
+        annualPoints: stored.annualPoints,
+        legacyPoints: stored.legacyPoints,
+        quests: stored.quests,
+        moods: stored.moods,
+        poems: stored.poems,
+        streaks,
+      };
+    }
+  }
+
+  // Transform raw data from source files
   const quests = transformQuests(MY_QUESTS);
   const moods = transformMoods(MY_MOODS);
   const poems = transformPoems(MY_POEMS);
@@ -217,7 +242,7 @@ export function loadGameData(): GameState {
   // Get current year
   const currentYear = new Date().getFullYear();
 
-  return {
+  const gameState: GameState = {
     currentYear,
     annualPoints,
     legacyPoints: 0, // Will be calculated at year end
@@ -226,4 +251,16 @@ export function loadGameData(): GameState {
     poems,
     streaks,
   };
+
+  // Save to cornerstone for offline persistence
+  saveCornerstoneData({
+    quests,
+    moods,
+    poems,
+    annualPoints,
+    legacyPoints: 0,
+    streaks,
+  });
+
+  return gameState;
 }
