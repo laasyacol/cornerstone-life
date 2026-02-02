@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { loadGameData } from '@/lib/dataLoader';
 import { Navigation } from '@/components/Navigation';
 import { PlayerCard } from '@/components/PlayerCard';
@@ -9,15 +9,29 @@ import { PoetryCorner } from '@/components/PoetryCorner';
 import { StreakDisplay } from '@/components/StreakDisplay';
 import { QuestsList } from '@/components/QuestsList';
 import { YearlyStats } from '@/components/YearlyStats';
+import { WelcomeScreen } from '@/components/WelcomeScreen';
 import { Scroll, ChevronRight } from 'lucide-react';
 
 type NavView = 'dashboard' | 'quests' | 'poetry' | 'calendar' | 'yearly';
 
 const Index = () => {
   const [currentView, setCurrentView] = useState<NavView>('dashboard');
+  const [showWelcome, setShowWelcome] = useState(true);
   const gameState = loadGameData();
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowWelcome(false);
+    }, 5000); // 5 seconds
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const activeQuests = gameState.quests.filter(q => q.status === 'active').slice(0, 3);
+
+  if (showWelcome) {
+    return <WelcomeScreen />;
+  }
 
   return (
     <div className="flex min-h-screen bg-background">
