@@ -9,7 +9,7 @@
  * Change this value to set a new password
  * The hash is computed automatically at runtime
  */
-const CORNER_PASSWORD = '11018240';
+const CORNER_PASSWORD = '110018240';
 
 /**
  * CORNER: Salt for password hashing
