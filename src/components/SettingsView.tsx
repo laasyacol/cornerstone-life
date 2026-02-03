@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings, Download, Upload, Trash2, Smartphone } from 'lucide-react';
+import { Settings, Download, Upload, Trash2, Smartphone, Lock } from 'lucide-react';
 import { exportCornerstoneData, importCornerstoneData, clearCornerstoneData, hasCornerstoneData } from '@/lib/storage';
 import { toast } from 'sonner';
 
@@ -8,7 +8,11 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-export function SettingsView() {
+interface SettingsViewProps {
+  onLock: () => void;
+}
+
+export function SettingsView({ onLock }: SettingsViewProps) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [hasData, setHasData] = useState(false);
@@ -88,6 +92,12 @@ export function SettingsView() {
     }
   };
 
+  const handleLock = () => {
+    sessionStorage.removeItem('corner-unlocked');
+    onLock();
+    toast.success('Corner locked. Goodbye!');
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
@@ -134,6 +144,28 @@ export function SettingsView() {
             </p>
           </div>
         )}
+      </div>
+
+      {/* Security Section */}
+      <div className="stat-card">
+        <h3 className="font-serif text-lg text-foreground mb-4 flex items-center gap-2">
+          <Lock className="w-5 h-5 text-primary" />
+          Security
+        </h3>
+        <div className="space-y-4">
+          <p className="text-muted-foreground">
+            Lock your corner to require password on next access. 
+            You can also type <code className="px-2 py-0.5 bg-secondary rounded text-foreground">lockit</code> anywhere to lock instantly.
+          </p>
+          <button
+            onClick={handleLock}
+            className="px-6 py-3 bg-destructive/10 hover:bg-destructive/20 text-destructive rounded-lg font-medium
+              transition-colors flex items-center gap-2 border border-destructive/30"
+          >
+            <Lock className="w-4 h-4" />
+            Lock CORNER
+          </button>
+        </div>
       </div>
 
       {/* Data Management Section */}

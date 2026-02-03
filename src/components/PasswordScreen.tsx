@@ -1,22 +1,26 @@
 import { useState } from 'react';
 import { Lock } from 'lucide-react';
+import { verifyPassword } from '@/lib/passwordUtils';
 import playerAvatar from '@/assets/player-avatar.jpg';
 
 interface PasswordScreenProps {
   onUnlock: () => void;
 }
 
-const CORRECT_PASSWORD = '11018240';
-
 export function PasswordScreen({ onUnlock }: PasswordScreenProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
   const [shake, setShake] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (password === CORRECT_PASSWORD) {
+    setIsVerifying(true);
+    const isValid = await verifyPassword(password);
+    setIsVerifying(false);
+    
+    if (isValid) {
       // Store unlock state
       sessionStorage.setItem('corner-unlocked', 'true');
       onUnlock();
@@ -65,6 +69,7 @@ export function PasswordScreen({ onUnlock }: PasswordScreenProps) {
               focus:outline-none focus:ring-2 focus:ring-primary transition-all
               ${error ? 'border-destructive' : 'border-border'}`}
             autoFocus
+            disabled={isVerifying}
           />
           
           {error && (
@@ -73,10 +78,11 @@ export function PasswordScreen({ onUnlock }: PasswordScreenProps) {
           
           <button
             type="submit"
+            disabled={isVerifying}
             className="w-full px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium
-              hover:opacity-90 transition-opacity"
+              hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            Unlock
+            {isVerifying ? 'Verifying...' : 'Unlock'}
           </button>
         </form>
       </div>
