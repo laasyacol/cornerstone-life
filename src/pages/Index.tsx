@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { loadGameData } from '@/lib/dataLoader';
 import { Navigation } from '@/components/Navigation';
 import { PlayerCard } from '@/components/PlayerCard';
@@ -23,6 +23,41 @@ const Index = () => {
     return sessionStorage.getItem('corner-unlocked') === 'true';
   });
   const gameState = loadGameData();
+
+  // Secret "lockit" command listener
+  const [typedKeys, setTypedKeys] = useState('');
+  
+  const handleLock = useCallback(() => {
+    sessionStorage.removeItem('corner-unlocked');
+    setIsUnlocked(false);
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only track alphanumeric keys
+      if (e.key.length === 1 && /[a-zA-Z]/.test(e.key)) {
+        setTypedKeys(prev => {
+          const newKeys = (prev + e.key.toLowerCase()).slice(-6); // Keep last 6 chars
+          if (newKeys === 'lockit') {
+            handleLock();
+            return '';
+          }
+          return newKeys;
+        });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleLock]);
+
+  // Reset typed keys after 2 seconds of inactivity
+  useEffect(() => {
+    if (typedKeys) {
+      const timer = setTimeout(() => setTypedKeys(''), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [typedKeys]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -172,7 +207,7 @@ const Index = () => {
           )}
 
           {currentView === 'settings' && (
-            <SettingsView />
+            <SettingsView onLock={handleLock} />
           )}
         </div>
       </main>
