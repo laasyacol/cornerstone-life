@@ -48,7 +48,7 @@ export function SettingsView({ onLock }: SettingsViewProps) {
 
   const handleInstall = async () => {
     if (!deferredPrompt) {
-      toast.info('Use your browser menu to install: ⋮ → Install app');
+      // Prompt not available yet - this shouldn't happen if button is shown correctly
       return;
     }
 
@@ -57,6 +57,7 @@ export function SettingsView({ onLock }: SettingsViewProps) {
     
     if (outcome === 'accepted') {
       setDeferredPrompt(null);
+      toast.success('Installing CORNER...');
     }
   };
 
@@ -125,7 +126,7 @@ export function SettingsView({ onLock }: SettingsViewProps) {
               You're running the desktop app. Works offline!
             </p>
           </div>
-        ) : (
+        ) : deferredPrompt ? (
           <div className="space-y-4">
             <p className="text-muted-foreground">
               Install CORNER as a desktop app for quick access and offline use. 
@@ -139,8 +140,12 @@ export function SettingsView({ onLock }: SettingsViewProps) {
               <Download className="w-4 h-4" />
               Install CORNER
             </button>
-            <p className="text-xs text-muted-foreground">
-              Or use browser menu: ⋮ → "Install app" or "Add to Home Screen"
+          </div>
+        ) : (
+          <div className="p-4 bg-secondary/50 rounded-lg">
+            <p className="text-foreground font-medium">App Ready</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              CORNER is already available for offline use. Bookmark this page for quick access.
             </p>
           </div>
         )}
