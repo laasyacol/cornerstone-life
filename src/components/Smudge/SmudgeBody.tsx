@@ -1,13 +1,14 @@
-import { useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import { SmudgeState, SmudgePosition } from './smudgeTypes';
 
 interface SmudgeBodyProps {
   state: SmudgeState;
   eyeTarget: SmudgePosition;
   position: SmudgePosition;
+  isBeingChased?: boolean;
 }
 
-export function SmudgeBody({ state, eyeTarget, position }: SmudgeBodyProps) {
+export function SmudgeBody({ state, eyeTarget, position, isBeingChased = false }: SmudgeBodyProps) {
   const bodyRef = useRef<SVGGElement>(null);
   
   // Calculate eye direction based on cursor
@@ -39,13 +40,17 @@ export function SmudgeBody({ state, eyeTarget, position }: SmudgeBodyProps) {
   const isAnnoyed = state === 'ANNOYED';
   const isBored = state === 'BORED';
   const isSuccess = state === 'SUCCESS';
+  const isGiggling = state === 'GIGGLING';
+  const isFleeing = state === 'FLEEING';
   
   // Hair/spike animation based on state
   const getHairStyle = () => {
+    if (isBeingChased || isFleeing) return 'chase'; // Extra spikes when fleeing
     switch (state) {
       case 'BORED': return 'droop';
       case 'WATCHING': return 'alert';
       case 'ANNOYED': return 'spike';
+      case 'GIGGLING': return 'alert';
       case 'IDLE': return 'relaxed';
       default: return 'relaxed';
     }
@@ -63,24 +68,47 @@ export function SmudgeBody({ state, eyeTarget, position }: SmudgeBodyProps) {
         ${isAnnoyed ? 'animate-smudge-shake' : ''}
         ${isBored ? 'animate-smudge-hop' : ''}
         ${isSuccess ? 'animate-smudge-step-aside' : ''}
+        ${isGiggling ? 'animate-smudge-giggle' : ''}
+        ${isFleeing ? 'animate-smudge-flee' : ''}
       `}
     >
       <g ref={bodyRef}>
         {/* Soot spikes/hair - irregular, spiky extensions */}
         <g className={`smudge-hair smudge-hair-${hairStyle}`}>
           {/* Top spikes */}
-          <line x1="30" y1="12" x2="28" y2="4" stroke="hsl(var(--foreground))" strokeWidth="1.5" strokeLinecap="round" opacity="0.7" 
-            className={`transition-all duration-500 ${hairStyle === 'droop' ? 'translate-y-2' : hairStyle === 'spike' ? '-translate-y-1' : ''}`} />
+          <line x1="30" y1="12" x2="28" y2="4" stroke="hsl(var(--foreground))" strokeWidth="1.5" strokeLinecap="round" opacity="0.7" />
           <line x1="35" y1="13" x2="38" y2="5" stroke="hsl(var(--foreground))" strokeWidth="1" strokeLinecap="round" opacity="0.6" />
           <line x1="24" y1="14" x2="20" y2="7" stroke="hsl(var(--foreground))" strokeWidth="1.2" strokeLinecap="round" opacity="0.65" />
+          
+          {/* Extra top spikes when chased */}
+          {(isBeingChased || isFleeing) && (
+            <>
+              <line x1="32" y1="11" x2="34" y2="2" stroke="hsl(var(--foreground))" strokeWidth="1.3" strokeLinecap="round" opacity="0.75" />
+              <line x1="27" y1="12" x2="24" y2="3" stroke="hsl(var(--foreground))" strokeWidth="1.1" strokeLinecap="round" opacity="0.7" />
+            </>
+          )}
           
           {/* Right spikes */}
           <line x1="48" y1="28" x2="55" y2="26" stroke="hsl(var(--foreground))" strokeWidth="1" strokeLinecap="round" opacity="0.6" />
           <line x1="47" y1="35" x2="54" y2="38" stroke="hsl(var(--foreground))" strokeWidth="1.3" strokeLinecap="round" opacity="0.55" />
           
+          {/* Extra right spikes when chased */}
+          {(isBeingChased || isFleeing) && (
+            <>
+              <line x1="49" y1="31" x2="57" y2="30" stroke="hsl(var(--foreground))" strokeWidth="1.2" strokeLinecap="round" opacity="0.65" />
+            </>
+          )}
+          
           {/* Left spikes */}
           <line x1="12" y1="30" x2="5" y2="28" stroke="hsl(var(--foreground))" strokeWidth="1.2" strokeLinecap="round" opacity="0.6" />
           <line x1="14" y1="38" x2="7" y2="42" stroke="hsl(var(--foreground))" strokeWidth="1" strokeLinecap="round" opacity="0.55" />
+          
+          {/* Extra left spikes when chased */}
+          {(isBeingChased || isFleeing) && (
+            <>
+              <line x1="11" y1="34" x2="3" y2="33" stroke="hsl(var(--foreground))" strokeWidth="1.1" strokeLinecap="round" opacity="0.6" />
+            </>
+          )}
           
           {/* Bottom-ish spikes */}
           <line x1="22" y1="47" x2="18" y2="53" stroke="hsl(var(--foreground))" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
@@ -108,6 +136,20 @@ export function SmudgeBody({ state, eyeTarget, position }: SmudgeBodyProps) {
           opacity="0.95"
         />
 
+        {/* Angry forehead symbol - anime style cross veins */}
+        {isAnnoyed && (
+          <g className="animate-pulse">
+            <path 
+              d="M38 16 Q42 18, 44 14 M40 14 Q42 18, 46 16"
+              stroke="hsl(var(--destructive))"
+              strokeWidth="2"
+              strokeLinecap="round"
+              fill="none"
+              opacity="0.9"
+            />
+          </g>
+        )}
+
         {/* Line arms - simple soot extensions */}
         <g className="smudge-arms">
           {/* Left arm */}
@@ -116,7 +158,9 @@ export function SmudgeBody({ state, eyeTarget, position }: SmudgeBodyProps) {
               ? "M14 32 Q8 28, 20 24" // covering eyes
               : isBored 
                 ? "M14 32 Q6 38, 8 45" // hanging loose
-                : "M14 32 Q8 34, 6 38" // relaxed
+                : isGiggling
+                  ? "M14 32 Q4 28, 6 35" // flailing happily
+                  : "M14 32 Q8 34, 6 38" // relaxed
             }
             stroke="hsl(var(--foreground))"
             strokeWidth="2"
@@ -132,7 +176,9 @@ export function SmudgeBody({ state, eyeTarget, position }: SmudgeBodyProps) {
               ? "M46 32 Q52 28, 40 24" // covering eyes
               : isBored 
                 ? "M46 32 Q54 38, 52 45" // hanging loose
-                : "M46 32 Q52 34, 54 38" // relaxed
+                : isGiggling
+                  ? "M46 32 Q56 28, 54 35" // flailing happily
+                  : "M46 32 Q52 34, 54 38" // relaxed
             }
             stroke="hsl(var(--foreground))"
             strokeWidth="2"
@@ -143,6 +189,32 @@ export function SmudgeBody({ state, eyeTarget, position }: SmudgeBodyProps) {
           />
         </g>
 
+        {/* Laughing tears when giggling */}
+        {isGiggling && (
+          <g className="smudge-tears">
+            {/* Left tear */}
+            <ellipse 
+              cx="18" 
+              cy="36" 
+              rx="3" 
+              ry="4"
+              fill="hsl(var(--primary))"
+              opacity="0.7"
+              className="animate-smudge-tear-left"
+            />
+            {/* Right tear */}
+            <ellipse 
+              cx="42" 
+              cy="36" 
+              rx="3" 
+              ry="4"
+              fill="hsl(var(--primary))"
+              opacity="0.7"
+              className="animate-smudge-tear-right"
+            />
+          </g>
+        )}
+
         {/* Eyes - floating within the mass */}
         {!isHiding && (
           <g className="smudge-eyes transition-all duration-200">
@@ -150,19 +222,33 @@ export function SmudgeBody({ state, eyeTarget, position }: SmudgeBodyProps) {
             <ellipse 
               cx={24 + eyeOffset.x * 0.5} 
               cy={30 + eyeOffset.y * 0.5} 
-              rx={isPeeking ? 2 : 4} 
-              ry={isPeeking ? 3 : 5}
+              rx={isPeeking ? 2 : isGiggling ? 2 : isAnnoyed ? 3 : 4} 
+              ry={isPeeking ? 3 : isGiggling ? 1 : isAnnoyed ? 2 : 5}
               fill="hsl(var(--background))"
               opacity={isPeeking ? 0.5 : 1}
             />
             {/* Left pupil */}
-            <circle 
-              cx={24 + eyeOffset.x} 
-              cy={30 + eyeOffset.y} 
-              r={isPeeking ? 1 : 2}
-              fill="hsl(var(--foreground))"
-              opacity={isPeeking ? 0.5 : 1}
-            />
+            {!isGiggling && (
+              <circle 
+                cx={24 + eyeOffset.x} 
+                cy={isAnnoyed ? 31 + eyeOffset.y : 30 + eyeOffset.y} 
+                r={isPeeking ? 1 : isAnnoyed ? 1.5 : 2}
+                fill="hsl(var(--foreground))"
+                opacity={isPeeking ? 0.5 : 1}
+              />
+            )}
+            
+            {/* Angry eyebrow for left eye */}
+            {isAnnoyed && (
+              <line 
+                x1="20" y1="24" 
+                x2="28" y2="26"
+                stroke="hsl(var(--foreground))"
+                strokeWidth="2"
+                strokeLinecap="round"
+                opacity="0.9"
+              />
+            )}
             
             {/* Right eye - hidden when peeking (one eye peek) */}
             {!isPeeking && (
@@ -170,16 +256,30 @@ export function SmudgeBody({ state, eyeTarget, position }: SmudgeBodyProps) {
                 <ellipse 
                   cx={36 + eyeOffset.x * 0.5} 
                   cy={30 + eyeOffset.y * 0.5} 
-                  rx="4" 
-                  ry="5"
+                  rx={isGiggling ? 2 : isAnnoyed ? 3 : 4}
+                  ry={isGiggling ? 1 : isAnnoyed ? 2 : 5}
                   fill="hsl(var(--background))"
                 />
-                <circle 
-                  cx={36 + eyeOffset.x} 
-                  cy={30 + eyeOffset.y} 
-                  r="2"
-                  fill="hsl(var(--foreground))"
-                />
+                {!isGiggling && (
+                  <circle 
+                    cx={36 + eyeOffset.x} 
+                    cy={isAnnoyed ? 31 + eyeOffset.y : 30 + eyeOffset.y} 
+                    r={isAnnoyed ? 1.5 : 2}
+                    fill="hsl(var(--foreground))"
+                  />
+                )}
+                
+                {/* Angry eyebrow for right eye */}
+                {isAnnoyed && (
+                  <line 
+                    x1="32" y1="26" 
+                    x2="40" y2="24"
+                    stroke="hsl(var(--foreground))"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    opacity="0.9"
+                  />
+                )}
               </>
             )}
           </g>
