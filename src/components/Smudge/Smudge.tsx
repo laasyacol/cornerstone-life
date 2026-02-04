@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SmudgeBody } from './SmudgeBody';
 import { useSmudgeState } from './useSmudgeState';
-import { SmudgePosition } from './smudgeTypes';
 
 interface SmudgeProps {
   isPasswordFocused?: boolean;
@@ -12,61 +11,46 @@ export function Smudge({
   isPasswordFocused = false, 
   passwordResult = 'none' 
 }: SmudgeProps) {
-  // Position in bottom-right corner by default
-  const [position, setPosition] = useState<SmudgePosition>({ x: 0, y: 0 });
   const [mounted, setMounted] = useState(false);
 
-  const { state, cursorPosition, eyeTarget } = useSmudgeState({
+  const { state, cursorPosition, eyeTarget, position, isBeingChased, isDraggingCursor } = useSmudgeState({
     isPasswordFocused,
     passwordResult
   });
 
   useEffect(() => {
-    // Initial position - bottom right corner
-    setPosition({
-      x: window.innerWidth - 80,
-      y: window.innerHeight - 80
-    });
     setMounted(true);
-
-    const handleResize = () => {
-      setPosition({
-        x: window.innerWidth - 80,
-        y: window.innerHeight - 80
-      });
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   if (!mounted) return null;
 
   return (
     <div 
-      className="fixed z-40 pointer-events-none select-none"
+      className={`
+        fixed z-40 select-none
+        ${isDraggingCursor ? 'pointer-events-auto cursor-grab' : 'pointer-events-none'}
+      `}
       style={{
         left: position.x,
         top: position.y,
-        transition: 'left 0.3s ease-out, top 0.3s ease-out'
+        transition: state === 'FLEEING' || state === 'BORED' || state === 'GIGGLING' 
+          ? 'left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)' 
+          : 'left 0.3s ease-out, top 0.3s ease-out'
       }}
     >
       {/* Subtle breathing animation container */}
       <div className={`
         ${state === 'IDLE' ? 'animate-smudge-breathe' : ''}
         ${state === 'BORED' ? 'animate-smudge-fidget' : ''}
+        ${state === 'GIGGLING' ? 'animate-smudge-wiggle' : ''}
       `}>
         <SmudgeBody 
           state={state} 
           eyeTarget={eyeTarget}
           position={position}
+          isBeingChased={isBeingChased}
         />
       </div>
-      
-      {/* Debug state indicator - remove in production */}
-      {/* <div className="text-xs text-muted-foreground mt-1 text-center opacity-50">
-        {state}
-      </div> */}
     </div>
   );
 }
