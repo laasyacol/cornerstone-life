@@ -184,4 +184,88 @@
   .animate-shake {
     animation: shake 0.5s ease-in-out;
   }
+
+  /* Smudge Animations */
+  @keyframes smudge-breathe {
+    0%, 100% { transform: scale(1) translateY(0); }
+    50% { transform: scale(1.02) translateY(-1px); }
+  }
+
+  @keyframes smudge-hop {
+    0%, 100% { transform: translateY(0) scaleY(1); }
+    15% { transform: translateY(0) scaleY(0.85) scaleX(1.1); }
+    30% { transform: translateY(-15px) scaleY(1.1) scaleX(0.95); }
+    50% { transform: translateY(-20px) scaleY(1); }
+    70% { transform: translateY(-10px) scaleY(1); }
+    85% { transform: translateY(0) scaleY(0.9) scaleX(1.05); }
+  }
+
+  @keyframes smudge-shake {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    15% { transform: translateX(-4px) rotate(-3deg); }
+    30% { transform: translateX(4px) rotate(3deg); }
+    45% { transform: translateX(-3px) rotate(-2deg); }
+    60% { transform: translateX(3px) rotate(2deg); }
+    75% { transform: translateX(-2px) rotate(-1deg); }
+    90% { transform: translateX(2px) rotate(1deg); }
+  }
+
+  @keyframes smudge-step-aside {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(10px); }
+    100% { transform: translateX(5px); }
+  }
+
+  @keyframes smudge-fidget {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    25% { transform: translateX(3px) rotate(2deg); }
+    50% { transform: translateX(-2px) rotate(-1deg); }
+    75% { transform: translateX(2px) rotate(1deg); }
+  }
+
+  .animate-smudge-breathe {
+    animation: smudge-breathe 3s ease-in-out infinite;
+  }
+
+  .animate-smudge-hop {
+    animation: smudge-hop 0.8s ease-in-out;
+  }
+
+  .animate-smudge-shake {
+    animation: smudge-shake 0.5s ease-in-out;
+  }
+
+  .animate-smudge-step-aside {
+    animation: smudge-step-aside 0.4s ease-out forwards;
+  }
+
+  .animate-smudge-fidget {
+    animation: smudge-fidget 2s ease-in-out infinite;
+  }
+
+  /* Smudge hair states */
+  .smudge-hair line {
+    transition: all 0.5s ease-out;
+    transform-origin: center;
+  }
+
+  .smudge-hair-droop line {
+    transform: translateY(2px) rotate(5deg);
+    opacity: 0.5;
+  }
+
+  .smudge-hair-alert line {
+    transform: translateY(-2px) scaleY(1.1);
+    opacity: 0.8;
+  }
+
+  .smudge-hair-spike line {
+    transform: scaleY(1.3) scaleX(1.2);
+    opacity: 0.9;
+  }
+
+  .smudge-hair-relaxed line {
+    transform: rotate(2deg);
+    opacity: 0.6;
+  }
 }

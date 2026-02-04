@@ -12,6 +12,7 @@ import { YearlyStats } from '@/components/YearlyStats';
 import { SettingsView } from '@/components/SettingsView';
 import { WelcomeScreen } from '@/components/WelcomeScreen';
 import { PasswordScreen } from '@/components/PasswordScreen';
+import { Smudge } from '@/components/Smudge';
 import { Scroll, ChevronRight } from 'lucide-react';
 
 type NavView = 'dashboard' | 'quests' | 'poetry' | 'calendar' | 'yearly' | 'settings';
@@ -211,6 +212,9 @@ const Index = () => {
           )}
         </div>
       </main>
+
+      {/* Smudge companion - always visible after unlock */}
+      <Smudge />
     </div>
   );
 };
