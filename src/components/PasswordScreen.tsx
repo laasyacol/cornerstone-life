@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Lock } from 'lucide-react';
 import { verifyPassword } from '@/lib/passwordUtils';
 import playerAvatar from '@/assets/player-avatar.jpg';
+import { Smudge } from '@/components/Smudge';
 
 interface PasswordScreenProps {
   onUnlock: () => void;
@@ -12,6 +13,16 @@ export function PasswordScreen({ onUnlock }: PasswordScreenProps) {
   const [error, setError] = useState(false);
   const [shake, setShake] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const [passwordResult, setPasswordResult] = useState<'none' | 'success' | 'failure'>('none');
+
+  // Reset password result after animation
+  useEffect(() => {
+    if (passwordResult !== 'none') {
+      const timer = setTimeout(() => setPasswordResult('none'), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [passwordResult]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,10 +32,13 @@ export function PasswordScreen({ onUnlock }: PasswordScreenProps) {
     setIsVerifying(false);
     
     if (isValid) {
+      setPasswordResult('success');
       // Store unlock state
       sessionStorage.setItem('corner-unlocked', 'true');
-      onUnlock();
+      // Small delay to show success state
+      setTimeout(() => onUnlock(), 300);
     } else {
+      setPasswordResult('failure');
       setError(true);
       setShake(true);
       setTimeout(() => setShake(false), 500);
@@ -64,7 +78,9 @@ export function PasswordScreen({ onUnlock }: PasswordScreenProps) {
               setPassword(e.target.value);
               setError(false);
             }}
-            placeholder="••••••••"
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            placeholder="password"
             className={`w-64 px-4 py-3 text-center text-lg tracking-widest bg-card border rounded-lg 
               focus:outline-none focus:ring-2 focus:ring-primary transition-all
               ${error ? 'border-destructive' : 'border-border'}`}
@@ -86,6 +102,12 @@ export function PasswordScreen({ onUnlock }: PasswordScreenProps) {
           </button>
         </form>
       </div>
+
+      {/* Smudge companion */}
+      <Smudge 
+        isPasswordFocused={isFocused} 
+        passwordResult={passwordResult}
+      />
     </div>
   );
 }
