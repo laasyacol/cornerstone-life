@@ -1,12 +1,14 @@
 import { Quest, CATEGORY_INFO, QuestCategory } from '@/lib/gameData';
 import { QuestCard } from './QuestCard';
 import { useState } from 'react';
+import { QuestCreator } from './QuestCreator';
 
 interface QuestsListProps {
   quests: Quest[];
+  onRefresh?: () => void;
 }
 
-export function QuestsList({ quests }: QuestsListProps) {
+export function QuestsList({ quests, onRefresh }: QuestsListProps) {
   const [filter, setFilter] = useState<QuestCategory | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed' | 'failed'>('all');
 
@@ -30,6 +32,7 @@ export function QuestsList({ quests }: QuestsListProps) {
             {activeQuests.length} active • {completedQuests.length} completed
           </p>
         </div>
+        <QuestCreator onQuestCreated={onRefresh} />
       </div>
 
       {/* Filters */}

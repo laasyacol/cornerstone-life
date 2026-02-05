@@ -13,6 +13,7 @@ import { SettingsView } from '@/components/SettingsView';
 import { WelcomeScreen } from '@/components/WelcomeScreen';
 import { PasswordScreen } from '@/components/PasswordScreen';
 import { Smudge } from '@/components/Smudge';
+import { MoodEntry } from '@/components/MoodEntry';
 import { Scroll, ChevronRight } from 'lucide-react';
 
 type NavView = 'dashboard' | 'quests' | 'poetry' | 'calendar' | 'yearly' | 'settings';
@@ -23,7 +24,12 @@ const Index = () => {
   const [isUnlocked, setIsUnlocked] = useState(() => {
     return sessionStorage.getItem('corner-unlocked') === 'true';
   });
+  const [refreshKey, setRefreshKey] = useState(0);
   const gameState = loadGameData();
+
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   // Secret "lockit" command listener
   const [typedKeys, setTypedKeys] = useState('');
@@ -175,21 +181,24 @@ const Index = () => {
 
           {currentView === 'quests' && (
             <div className="animate-fade-in">
-              <QuestsList quests={gameState.quests} />
+              <QuestsList quests={gameState.quests} onRefresh={handleRefresh} />
             </div>
           )}
 
           {currentView === 'poetry' && (
             <div className="animate-fade-in">
-              <PoetryCorner poems={gameState.poems} />
+              <PoetryCorner poems={gameState.poems} onRefresh={handleRefresh} />
             </div>
           )}
 
           {currentView === 'calendar' && (
             <div className="animate-fade-in space-y-6">
-              <div>
-                <h2 className="font-serif text-2xl text-foreground">Mood Calendar</h2>
-                <p className="text-sm text-muted-foreground">Visual representation of your emotional weather throughout the year</p>
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                  <h2 className="font-serif text-2xl text-foreground">Mood Calendar</h2>
+                  <p className="text-sm text-muted-foreground">Visual representation of your emotional weather throughout the year</p>
+                </div>
+                <MoodEntry onMoodLogged={handleRefresh} />
               </div>
               <MoodCalendar moods={gameState.moods} year={2026} month={0} />
               <div className="stat-card">

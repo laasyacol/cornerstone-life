@@ -1,16 +1,18 @@
 import { Poem } from '@/lib/gameData';
 import { Feather, Calendar } from 'lucide-react';
 import { formatPoemContent } from '@/lib/formatPoem';
+import { PoemCreator } from './PoemCreator';
 
 interface PoetryCornerProps {
   poems: Poem[];
+  onRefresh?: () => void;
 }
 
-export function PoetryCorner({ poems }: PoetryCornerProps) {
+export function PoetryCorner({ poems, onRefresh }: PoetryCornerProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg burgundy-gradient flex items-center justify-center">
             <Feather className="w-5 h-5 text-primary-foreground" />
@@ -20,6 +22,7 @@ export function PoetryCorner({ poems }: PoetryCornerProps) {
             <p className="text-sm text-muted-foreground">{poems.length} poems in archive</p>
           </div>
         </div>
+        <PoemCreator onPoemCreated={onRefresh} />
       </div>
 
       {/* Auto-generated Index */}
