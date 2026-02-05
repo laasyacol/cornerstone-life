@@ -23,6 +23,7 @@ export function useSmudgeState({ isPasswordFocused, passwordResult }: UseSmudgeS
   const stateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const cornerHopRef = useRef<NodeJS.Timeout | null>(null);
   const smudgePositionRef = useRef<SmudgePosition>({ x: 0, y: 0 });
+  const isTypingRef = useRef(false);
 
   // Initialize position
   useEffect(() => {
@@ -87,8 +88,8 @@ export function useSmudgeState({ isPasswordFocused, passwordResult }: UseSmudgeS
         setState('IDLE');
       }
       
-      // If not in a restricted state, transition to WATCHING
-      if (state === 'IDLE' || state === 'BORED') {
+      // If not in a restricted state and not typing, transition to WATCHING
+      if ((state === 'IDLE' || state === 'BORED') && !isTypingRef.current) {
         setState('WATCHING');
       }
     };
@@ -129,6 +130,7 @@ export function useSmudgeState({ isPasswordFocused, passwordResult }: UseSmudgeS
     const handleKeyDown = () => {
       lastTypingTime.current = Date.now();
       lastInteractionTime.current = Date.now();
+      isTypingRef.current = true;
       
       // Cancel cursor dragging on typing
       if (isDraggingCursor) {
@@ -141,9 +143,45 @@ export function useSmudgeState({ isPasswordFocused, passwordResult }: UseSmudgeS
       }
     };
 
+    const handleKeyUp = () => {
+      // Small delay before marking typing as finished
+      setTimeout(() => {
+        isTypingRef.current = false;
+      }, 200);
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
   }, [isPasswordFocused, state, isDraggingCursor, clearStateTimeout]);
+
+  // Listen for custom flee trigger (from Enter key in SmudgeInput)
+  useEffect(() => {
+    const handleFleeTrigger = () => {
+      if (state !== 'HIDING' && state !== 'GIGGLING') {
+        setState('FLEEING');
+        playFleeSound();
+        clearStateTimeout();
+        
+        // Move to a new corner
+        const newCornerIndex = (cornerIndex + 1 + Math.floor(Math.random() * 2)) % 4;
+        setCornerIndex(newCornerIndex);
+        const newPos = CORNER_POSITIONS[newCornerIndex].getPos(window.innerWidth, window.innerHeight);
+        setPosition(newPos);
+        smudgePositionRef.current = newPos;
+        
+        stateTimeoutRef.current = setTimeout(() => {
+          setState('IDLE');
+        }, STATE_TIMINGS.FLEE_DURATION);
+      }
+    };
+
+    window.addEventListener('smudge-flee-trigger', handleFleeTrigger);
+    return () => window.removeEventListener('smudge-flee-trigger', handleFleeTrigger);
+  }, [state, cornerIndex, clearStateTimeout]);
 
   // Handle password focus state
   useEffect(() => {
