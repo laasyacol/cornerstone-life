@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { SmudgeState, SmudgePosition } from './smudgeTypes';
+import { SootParticles } from './SootParticles';
 
 interface SmudgeBodyProps {
   state: SmudgeState;
@@ -59,6 +60,7 @@ export function SmudgeBody({ state, eyeTarget, position, isBeingChased = false }
   const hairStyle = getHairStyle();
 
   return (
+    <>
     <svg 
       width="60" 
       height="60" 
@@ -199,9 +201,13 @@ export function SmudgeBody({ state, eyeTarget, position, isBeingChased = false }
               rx="3" 
               ry="4"
               fill="hsl(var(--primary))"
-              opacity="0.7"
               className="animate-smudge-tear-left"
-            />
+              style={{
+                filter: 'drop-shadow(0 0 4px hsl(var(--primary))) drop-shadow(0 0 8px hsl(var(--primary) / 0.6))',
+              }}
+            >
+              <animate attributeName="opacity" values="0.9;0.6;0.9" dur="0.3s" repeatCount="indefinite" />
+            </ellipse>
             {/* Right tear */}
             <ellipse 
               cx="42" 
@@ -209,9 +215,16 @@ export function SmudgeBody({ state, eyeTarget, position, isBeingChased = false }
               rx="3" 
               ry="4"
               fill="hsl(var(--primary))"
-              opacity="0.7"
               className="animate-smudge-tear-right"
-            />
+              style={{
+                filter: 'drop-shadow(0 0 4px hsl(var(--primary))) drop-shadow(0 0 8px hsl(var(--primary) / 0.6))',
+              }}
+            >
+              <animate attributeName="opacity" values="0.9;0.6;0.9" dur="0.3s" repeatCount="indefinite" />
+            </ellipse>
+            {/* Extra sparkle tears */}
+            <circle cx="16" cy="40" r="2" fill="hsl(var(--primary))" opacity="0.5" className="animate-smudge-tear-left" />
+            <circle cx="44" cy="40" r="2" fill="hsl(var(--primary))" opacity="0.5" className="animate-smudge-tear-right" />
           </g>
         )}
 
@@ -286,5 +299,9 @@ export function SmudgeBody({ state, eyeTarget, position, isBeingChased = false }
         )}
       </g>
     </svg>
+    
+    {/* Soot particles when fleeing */}
+    {isFleeing && <SootParticles />}
+  </>
   );
 }

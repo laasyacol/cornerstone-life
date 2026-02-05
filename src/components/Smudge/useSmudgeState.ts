@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { SmudgeState, SmudgePosition, STATE_TIMINGS, CORNER_POSITIONS } from './smudgeTypes';
+import { playGiggleSound, playFleeSound } from './useSmudgeSounds';
 
 interface UseSmudgeStateProps {
   isPasswordFocused: boolean;
@@ -62,6 +63,7 @@ export function useSmudgeState({ isPasswordFocused, passwordResult }: UseSmudgeS
         setIsBeingChased(true);
         if (state !== 'FLEEING') {
           setState('FLEEING');
+          playFleeSound();
           clearStateTimeout();
           // Flee to a different corner
           const newCornerIndex = (cornerIndex + 2) % 4;
@@ -103,6 +105,7 @@ export function useSmudgeState({ isPasswordFocused, passwordResult }: UseSmudgeS
       // If click is on Smudge (within 40px of center)
       if (distance < 50 && state !== 'HIDING' && state !== 'GIGGLING') {
         setState('GIGGLING');
+        playGiggleSound();
         clearStateTimeout();
         
         // Flee to a random different corner after giggling
