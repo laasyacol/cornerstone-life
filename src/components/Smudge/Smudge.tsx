@@ -33,8 +33,10 @@ export function Smudge({
       style={{
         left: position.x,
         top: position.y,
-        transition: state === 'FLEEING' || state === 'BORED' || state === 'GIGGLING' 
-          ? 'left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)' 
+        transition: state === 'FLEEING'
+          ? 'left 1.8s cubic-bezier(0.25, 0.1, 0.25, 1), top 1.8s cubic-bezier(0.25, 0.1, 0.25, 1)'
+          : state === 'BORED' || state === 'GIGGLING' 
+          ? 'left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)' 
           : 'left 0.3s ease-out, top 0.3s ease-out'
       }}
     >
