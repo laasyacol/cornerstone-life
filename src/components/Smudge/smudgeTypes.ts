@@ -35,7 +35,7 @@ export const STATE_TIMINGS = {
   ANNOYED_DURATION: 1500,      // Max 1.5s for ANNOYED state
   CURSOR_IDLE_THRESHOLD: 4000, // 4s cursor idle for interaction
   GIGGLE_DURATION: 2000,       // 2s giggle animation
-  FLEE_DURATION: 1500,         // 1.5s flee animation
+  FLEE_DURATION: 2200,         // 2.2s flee animation (tiptoe run)
   CORNER_HOP_INTERVAL: 3000,   // 3s between corner hops when bored
 } as const;
 
