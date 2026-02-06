@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { SmudgeState, SmudgePosition } from './smudgeTypes';
 import { SootParticles } from './SootParticles';
+import { DustPuffs } from './DustPuffs';
 
 interface SmudgeBodyProps {
   state: SmudgeState;
@@ -302,6 +303,9 @@ export function SmudgeBody({ state, eyeTarget, position, isBeingChased = false }
     
     {/* Soot particles when fleeing */}
     {isFleeing && <SootParticles />}
+    
+    {/* Dust puffs at feet when fleeing */}
+    {isFleeing && <DustPuffs />}
   </>
   );
 }
