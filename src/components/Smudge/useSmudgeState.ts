@@ -47,38 +47,48 @@ export function useSmudgeState({ isPasswordFocused, passwordResult }: UseSmudgeS
     return Math.sqrt(dx * dx + dy * dy);
   }, []);
 
-  // Handle cursor movement
+  // Handle cursor movement with throttling to prevent glitches
   useEffect(() => {
+    let lastMoveTime = 0;
+    const THROTTLE_MS = 50; // Throttle mouse move updates
+    
     const handleMouseMove = (e: MouseEvent) => {
       const now = Date.now();
+      
+      // Throttle updates to prevent glitching
+      if (now - lastMoveTime < THROTTLE_MS) return;
+      lastMoveTime = now;
+      
       setCursorPosition({ x: e.clientX, y: e.clientY });
       lastInteractionTime.current = now;
       lastCursorMoveTime.current = now;
       
       setEyeTarget({ x: e.clientX, y: e.clientY });
       
+      // Skip state changes if user is actively typing
+      if (isTypingRef.current) return;
+      
       const distance = getDistanceToSmudge(e.clientX, e.clientY);
       
       // Check if cursor is chasing Smudge (within 100px)
-      if (distance < 100 && state !== 'HIDING' && state !== 'GIGGLING') {
+      if (distance < 100 && state !== 'HIDING' && state !== 'GIGGLING' && state !== 'FLEEING') {
         setIsBeingChased(true);
-        if (state !== 'FLEEING') {
-          setState('FLEEING');
-          playFleeSound();
-          clearStateTimeout();
-          // Flee to a different corner
-          const newCornerIndex = (cornerIndex + 2) % 4;
-          setCornerIndex(newCornerIndex);
-          const newPos = CORNER_POSITIONS[newCornerIndex].getPos(window.innerWidth, window.innerHeight);
-          setPosition(newPos);
-          smudgePositionRef.current = newPos;
-          
-          stateTimeoutRef.current = setTimeout(() => {
-            setIsBeingChased(false);
-            setState('IDLE');
-          }, STATE_TIMINGS.FLEE_DURATION);
-        }
-      } else {
+        setState('FLEEING');
+        playFleeSound();
+        clearStateTimeout();
+        // Flee to a different corner
+        const newCornerIndex = (cornerIndex + 2) % 4;
+        setCornerIndex(newCornerIndex);
+        const newPos = CORNER_POSITIONS[newCornerIndex].getPos(window.innerWidth, window.innerHeight);
+        setPosition(newPos);
+        smudgePositionRef.current = newPos;
+        
+        stateTimeoutRef.current = setTimeout(() => {
+          setIsBeingChased(false);
+          setState('IDLE');
+        }, STATE_TIMINGS.FLEE_DURATION);
+      } else if (distance >= 150) {
+        // Only reset chase state when cursor is far enough away
         setIsBeingChased(false);
       }
       

@@ -388,4 +388,24 @@
   .animate-dust-puff {
     animation: dust-puff 0.5s ease-out forwards;
   }
+
+  /* Soot smudge marks on text */
+  @keyframes soot-smudge {
+    0% {
+      opacity: 0.4;
+      transform: scale(0.8);
+    }
+    20% {
+      opacity: 0.3;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.2);
+    }
+  }
+
+  .animate-soot-smudge {
+    animation: soot-smudge 2s ease-out forwards;
+  }
 }
