@@ -408,4 +408,24 @@
   .animate-soot-smudge {
     animation: soot-smudge 2s ease-out forwards;
   }
+
+  /* Soot trail when fleeing */
+  @keyframes soot-trail {
+    0% {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+    20% {
+      opacity: 0.6;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.3) translateY(5px);
+    }
+  }
+
+  .animate-soot-trail {
+    animation: soot-trail 1.5s ease-out forwards;
+  }
 }

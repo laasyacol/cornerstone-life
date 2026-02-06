@@ -104,7 +104,7 @@ export function QuestsList({ quests, onRefresh }: QuestsListProps) {
               className="animate-slide-up"
               style={{ animationDelay: `${index * 50}ms` }}
             >
-              <QuestCard quest={quest} />
+              <QuestCard quest={quest} onUpdate={onRefresh} />
             </div>
           ))
         ) : (

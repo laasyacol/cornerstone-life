@@ -1,9 +1,11 @@
 import { Quest, QuestCategory, CATEGORY_INFO, resolveQuest } from '@/lib/gameData';
-import { CheckCircle2, Clock, AlertCircle, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock, AlertCircle, XCircle, RotateCcw, Check, Pencil, X } from 'lucide-react';
+import { useState } from 'react';
+import { loadCornerstoneData, saveCornerstoneData } from '@/lib/storage';
 
 interface QuestCardProps {
   quest: Quest;
-  onComplete?: (questId: string, withReason?: string) => void;
+  onUpdate?: () => void;
 }
 
 const statusConfig = {
@@ -23,11 +25,56 @@ const categoryColors: Record<QuestCategory, string> = {
   rest: 'bg-quest-rest/15 text-quest-rest',
 };
 
-export function QuestCard({ quest }: QuestCardProps) {
+export function QuestCard({ quest, onUpdate }: QuestCardProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(quest.name);
+  const [editPoints, setEditPoints] = useState(quest.points);
+
   const { earned, penalty } = resolveQuest(quest);
   const StatusIcon = statusConfig[quest.status].icon;
   const categoryInfo = CATEGORY_INFO[quest.category];
   const daysLeft = Math.ceil((quest.deadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+
+  const toggleStatus = () => {
+    const data = loadCornerstoneData();
+    if (!data?.quests) return;
+
+    const updatedQuests = data.quests.map(q => {
+      if (q.id === quest.id) {
+        if (q.status === 'active') {
+          return { ...q, status: 'completed' as const, completedAt: new Date() };
+        } else if (q.status === 'completed' || q.status === 'late-valid') {
+          return { ...q, status: 'active' as const, completedAt: undefined };
+        }
+      }
+      return q;
+    });
+
+    saveCornerstoneData({ quests: updatedQuests });
+    onUpdate?.();
+  };
+
+  const saveEdit = () => {
+    const data = loadCornerstoneData();
+    if (!data?.quests) return;
+
+    const updatedQuests = data.quests.map(q => {
+      if (q.id === quest.id) {
+        return { ...q, name: editName, points: editPoints };
+      }
+      return q;
+    });
+
+    saveCornerstoneData({ quests: updatedQuests });
+    setIsEditing(false);
+    onUpdate?.();
+  };
+
+  const cancelEdit = () => {
+    setEditName(quest.name);
+    setEditPoints(quest.points);
+    setIsEditing(false);
+  };
 
   return (
     <div className="stat-card group">
@@ -45,9 +92,28 @@ export function QuestCard({ quest }: QuestCardProps) {
             )}
           </div>
           
-          <h3 className="font-medium text-foreground group-hover:text-primary transition-colors truncate">
-            {quest.name}
-          </h3>
+          {isEditing ? (
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="w-full bg-background border border-border rounded px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                autoFocus
+              />
+              <input
+                type="number"
+                value={editPoints}
+                onChange={(e) => setEditPoints(Number(e.target.value))}
+                className="w-20 bg-background border border-border rounded px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                min={0}
+              />
+            </div>
+          ) : (
+            <h3 className="font-medium text-foreground group-hover:text-primary transition-colors truncate">
+              {quest.name}
+            </h3>
+          )}
           
           <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
@@ -65,18 +131,70 @@ export function QuestCard({ quest }: QuestCardProps) {
           )}
         </div>
 
-        {/* Points */}
-        <div className="text-right">
-          <p className="font-serif text-xl text-foreground">
-            {quest.status === 'active' ? (
-              <span className="text-accent">+{quest.points.toLocaleString()}</span>
-            ) : earned > 0 ? (
-              <span className="text-quest-skill">+{earned.toLocaleString()}</span>
+        {/* Actions & Points */}
+        <div className="flex flex-col items-end gap-2">
+          {/* Points */}
+          <div className="text-right">
+            <p className="font-serif text-xl text-foreground">
+              {quest.status === 'active' ? (
+                <span className="text-accent">+{quest.points.toLocaleString()}</span>
+              ) : earned > 0 ? (
+                <span className="text-quest-skill">+{earned.toLocaleString()}</span>
+              ) : (
+                <span className="text-destructive">−{penalty.toLocaleString()}</span>
+              )}
+            </p>
+            <p className="text-xs text-muted-foreground">points</p>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {isEditing ? (
+              <>
+                <button
+                  onClick={saveEdit}
+                  className="p-1.5 rounded-md hover:bg-quest-skill/20 text-quest-skill transition-colors"
+                  title="Save"
+                >
+                  <Check className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={cancelEdit}
+                  className="p-1.5 rounded-md hover:bg-destructive/20 text-destructive transition-colors"
+                  title="Cancel"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </>
             ) : (
-              <span className="text-destructive">−{penalty.toLocaleString()}</span>
+              <>
+                {quest.status !== 'failed' && (
+                  <button
+                    onClick={toggleStatus}
+                    className={`p-1.5 rounded-md transition-colors ${
+                      quest.status === 'active' 
+                        ? 'hover:bg-quest-skill/20 text-quest-skill' 
+                        : 'hover:bg-accent/20 text-accent'
+                    }`}
+                    title={quest.status === 'active' ? 'Mark Complete' : 'Mark Active'}
+                  >
+                    {quest.status === 'active' ? (
+                      <CheckCircle2 className="w-4 h-4" />
+                    ) : (
+                      <RotateCcw className="w-4 h-4" />
+                    )}
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="p-1.5 rounded-md hover:bg-primary/20 text-primary transition-colors"
+                  title="Edit"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              </>
             )}
-          </p>
-          <p className="text-xs text-muted-foreground">points</p>
+          </div>
         </div>
       </div>
     </div>
