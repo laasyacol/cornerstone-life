@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { SmudgeBody } from './SmudgeBody';
 import { useSmudgeState } from './useSmudgeState';
 import { SootTrail } from './SootTrail';
@@ -14,6 +14,8 @@ export function Smudge({
 }: SmudgeProps) {
   const [mounted, setMounted] = useState(false);
   const [prevPosition, setPrevPosition] = useState({ x: 0, y: 0 });
+  const [isLookingBack, setIsLookingBack] = useState(false);
+  const lookBackIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const { state, cursorPosition, eyeTarget, position, isBeingChased, isDraggingCursor } = useSmudgeState({
     isPasswordFocused,
@@ -36,6 +38,34 @@ export function Smudge({
       setPrevPosition(position);
     }
   }, [position, state, prevPosition]);
+
+  // Nervous look-back animation when fleeing
+  useEffect(() => {
+    if (state === 'FLEEING') {
+      // Start looking back after a brief delay
+      const startDelay = setTimeout(() => {
+        setIsLookingBack(true);
+        
+        // Toggle look-back nervously
+        lookBackIntervalRef.current = setInterval(() => {
+          setIsLookingBack(prev => !prev);
+        }, 400); // Quick nervous glances
+      }, 300);
+
+      return () => {
+        clearTimeout(startDelay);
+        if (lookBackIntervalRef.current) {
+          clearInterval(lookBackIntervalRef.current);
+        }
+        setIsLookingBack(false);
+      };
+    } else {
+      setIsLookingBack(false);
+      if (lookBackIntervalRef.current) {
+        clearInterval(lookBackIntervalRef.current);
+      }
+    }
+  }, [state]);
 
   if (!mounted) return null;
 
@@ -74,6 +104,7 @@ export function Smudge({
             eyeTarget={eyeTarget}
             position={position}
             isBeingChased={isBeingChased}
+            isLookingBack={isLookingBack}
           />
         </div>
       </div>
