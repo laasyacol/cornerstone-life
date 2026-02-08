@@ -10,34 +10,40 @@ interface SmudgeInputProps {
   className?: string;
 }
 
-// Soot smudge marks left behind on text
-function SootSmudges({ smudges }: { smudges: Array<{ id: number; x: number; y: number; opacity: number }> }) {
+// Soot smudge marks left behind on text - more prominent version
+function SootSmudges({ smudges }: { smudges: Array<{ id: number; x: number; y: number; opacity: number; size: number }> }) {
   return (
     <>
       {smudges.map((smudge) => (
         <div
           key={smudge.id}
-          className="pointer-events-none absolute z-10 animate-soot-smudge"
+          className="pointer-events-none absolute z-10 animate-soot-smudge-long"
           style={{
-            left: smudge.x - 8,
-            top: smudge.y - 4,
+            left: smudge.x - 12,
+            top: smudge.y - 8,
             opacity: smudge.opacity,
           }}
         >
-          {/* Smudge mark */}
-          <svg width="16" height="8" viewBox="0 0 16 8">
+          {/* Larger, more visible smudge marks */}
+          <svg width="28" height="16" viewBox="0 0 28 16">
+            {/* Main smudge blob */}
             <ellipse 
-              cx="8" cy="4" rx="7" ry="3" 
+              cx="14" cy="8" rx={10 * smudge.size} ry={5 * smudge.size} 
               fill="hsl(var(--foreground))" 
-              opacity="0.15"
+              opacity="0.25"
+              style={{ filter: 'blur(1.5px)' }}
+            />
+            {/* Secondary offset blob */}
+            <ellipse 
+              cx="10" cy="7" rx={6 * smudge.size} ry={3 * smudge.size} 
+              fill="hsl(var(--foreground))" 
+              opacity="0.2"
               style={{ filter: 'blur(1px)' }}
             />
-            <ellipse 
-              cx="6" cy="4" rx="4" ry="2" 
-              fill="hsl(var(--foreground))" 
-              opacity="0.1"
-              style={{ filter: 'blur(0.5px)' }}
-            />
+            {/* Tiny soot specks */}
+            <circle cx="18" cy="6" r={1.5 * smudge.size} fill="hsl(var(--foreground))" opacity="0.15" />
+            <circle cx="6" cy="10" r={1 * smudge.size} fill="hsl(var(--foreground))" opacity="0.12" />
+            <circle cx="20" cy="11" r={0.8 * smudge.size} fill="hsl(var(--foreground))" opacity="0.1" />
           </svg>
         </div>
       ))}
@@ -151,7 +157,7 @@ export function SmudgeInput({
 }: SmudgeInputProps) {
   const [isTyping, setIsTyping] = useState(false);
   const [eraserPosition, setEraserPosition] = useState<SmudgePosition>({ x: 0, y: 0 });
-  const [sootSmudges, setSootSmudges] = useState<Array<{ id: number; x: number; y: number; opacity: number }>>([]);
+  const [sootSmudges, setSootSmudges] = useState<Array<{ id: number; x: number; y: number; opacity: number; size: number }>>([]);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastPositionRef = useRef<SmudgePosition>({ x: 0, y: 0 });
@@ -184,15 +190,16 @@ export function SmudgeInput({
       setEraserPosition(newPos);
       lastPositionRef.current = newPos;
       
-      // Add soot smudge at current position (with some randomization)
-      if (textLength > 0 && distance > 5) {
+      // Add soot smudge at current position (with more randomization for prominence)
+      if (textLength > 0 && distance > 3) {
         const newSmudge = {
           id: smudgeIdRef.current++,
-          x: cursorX - charWidth + Math.random() * 4 - 2,
-          y: cursorY + Math.random() * 4 - 2,
-          opacity: 0.3 + Math.random() * 0.2,
+          x: cursorX - charWidth + Math.random() * 8 - 4,
+          y: cursorY + Math.random() * 6 - 3,
+          opacity: 0.5 + Math.random() * 0.3, // Higher opacity
+          size: 0.8 + Math.random() * 0.4, // Varying sizes
         };
-        setSootSmudges(prev => [...prev.slice(-8), newSmudge]); // Keep last 8 smudges
+        setSootSmudges(prev => [...prev.slice(-12), newSmudge]); // Keep last 12 smudges
       }
     }
   }, [value]);
@@ -233,12 +240,12 @@ export function SmudgeInput({
     }
   };
 
-  // Clean up old smudges periodically
+  // Clean up old smudges periodically - longer duration
   useEffect(() => {
     if (sootSmudges.length > 0) {
       const cleanup = setTimeout(() => {
         setSootSmudges(prev => prev.slice(1));
-      }, 2000);
+      }, 4000); // Last 4 seconds instead of 2
       return () => clearTimeout(cleanup);
     }
   }, [sootSmudges.length]);

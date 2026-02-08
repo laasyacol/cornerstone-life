@@ -8,9 +8,10 @@ interface SmudgeBodyProps {
   eyeTarget: SmudgePosition;
   position: SmudgePosition;
   isBeingChased?: boolean;
+  isLookingBack?: boolean;
 }
 
-export function SmudgeBody({ state, eyeTarget, position, isBeingChased = false }: SmudgeBodyProps) {
+export function SmudgeBody({ state, eyeTarget, position, isBeingChased = false, isLookingBack = false }: SmudgeBodyProps) {
   const bodyRef = useRef<SVGGElement>(null);
   
   // Calculate eye direction based on cursor
@@ -231,24 +232,37 @@ export function SmudgeBody({ state, eyeTarget, position, isBeingChased = false }
 
         {/* Eyes - floating within the mass */}
         {!isHiding && (
-          <g className="smudge-eyes transition-all duration-200">
-            {/* Left eye */}
+          <g className={`smudge-eyes transition-all duration-200 ${isLookingBack ? 'animate-smudge-look-back' : ''}`}>
+            {/* Left eye - when looking back, eyes shift to show nervous glance */}
             <ellipse 
-              cx={24 + eyeOffset.x * 0.5} 
-              cy={30 + eyeOffset.y * 0.5} 
-              rx={isPeeking ? 2 : isGiggling ? 2 : isAnnoyed ? 3 : 4} 
-              ry={isPeeking ? 3 : isGiggling ? 1 : isAnnoyed ? 2 : 5}
+              cx={isLookingBack ? 20 : 24 + eyeOffset.x * 0.5} 
+              cy={isLookingBack ? 28 : 30 + eyeOffset.y * 0.5} 
+              rx={isPeeking ? 2 : isGiggling ? 2 : isAnnoyed ? 3 : isLookingBack ? 5 : 4} 
+              ry={isPeeking ? 3 : isGiggling ? 1 : isAnnoyed ? 2 : isLookingBack ? 6 : 5}
               fill="hsl(var(--background))"
               opacity={isPeeking ? 0.5 : 1}
             />
-            {/* Left pupil */}
+            {/* Left pupil - tiny and looking back when fleeing */}
             {!isGiggling && (
               <circle 
-                cx={24 + eyeOffset.x} 
-                cy={isAnnoyed ? 31 + eyeOffset.y : 30 + eyeOffset.y} 
-                r={isPeeking ? 1 : isAnnoyed ? 1.5 : 2}
+                cx={isLookingBack ? 17 : 24 + eyeOffset.x} 
+                cy={isLookingBack ? 28 : isAnnoyed ? 31 + eyeOffset.y : 30 + eyeOffset.y} 
+                r={isPeeking ? 1 : isAnnoyed ? 1.5 : isLookingBack ? 1.5 : 2}
                 fill="hsl(var(--foreground))"
                 opacity={isPeeking ? 0.5 : 1}
+              />
+            )}
+            
+            {/* Nervous sweat drop when looking back */}
+            {isLookingBack && (
+              <ellipse
+                cx="14"
+                cy="24"
+                rx="2"
+                ry="3"
+                fill="hsl(var(--primary))"
+                opacity="0.6"
+                className="animate-sweat-drop"
               />
             )}
             
@@ -264,21 +278,33 @@ export function SmudgeBody({ state, eyeTarget, position, isBeingChased = false }
               />
             )}
             
-            {/* Right eye - hidden when peeking (one eye peek) */}
+            {/* Worried eyebrow when looking back */}
+            {isLookingBack && (
+              <path
+                d="M16 22 Q20 19, 24 22"
+                stroke="hsl(var(--foreground))"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                fill="none"
+                opacity="0.8"
+              />
+            )}
+            
+            {/* Right eye - hidden when peeking (one eye peek), wide and scared when looking back */}
             {!isPeeking && (
               <>
                 <ellipse 
-                  cx={36 + eyeOffset.x * 0.5} 
-                  cy={30 + eyeOffset.y * 0.5} 
-                  rx={isGiggling ? 2 : isAnnoyed ? 3 : 4}
-                  ry={isGiggling ? 1 : isAnnoyed ? 2 : 5}
+                  cx={isLookingBack ? 34 : 36 + eyeOffset.x * 0.5} 
+                  cy={isLookingBack ? 28 : 30 + eyeOffset.y * 0.5} 
+                  rx={isGiggling ? 2 : isAnnoyed ? 3 : isLookingBack ? 5 : 4}
+                  ry={isGiggling ? 1 : isAnnoyed ? 2 : isLookingBack ? 6 : 5}
                   fill="hsl(var(--background))"
                 />
                 {!isGiggling && (
                   <circle 
-                    cx={36 + eyeOffset.x} 
-                    cy={isAnnoyed ? 31 + eyeOffset.y : 30 + eyeOffset.y} 
-                    r={isAnnoyed ? 1.5 : 2}
+                    cx={isLookingBack ? 31 : 36 + eyeOffset.x} 
+                    cy={isLookingBack ? 28 : isAnnoyed ? 31 + eyeOffset.y : 30 + eyeOffset.y} 
+                    r={isAnnoyed ? 1.5 : isLookingBack ? 1.5 : 2}
                     fill="hsl(var(--foreground))"
                   />
                 )}
@@ -292,6 +318,18 @@ export function SmudgeBody({ state, eyeTarget, position, isBeingChased = false }
                     strokeWidth="2"
                     strokeLinecap="round"
                     opacity="0.9"
+                  />
+                )}
+                
+                {/* Worried eyebrow when looking back */}
+                {isLookingBack && (
+                  <path
+                    d="M30 22 Q34 19, 38 22"
+                    stroke="hsl(var(--foreground))"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    fill="none"
+                    opacity="0.8"
                   />
                 )}
               </>
