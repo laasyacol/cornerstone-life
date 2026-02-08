@@ -483,4 +483,33 @@
   .animate-sweat-drop {
     animation: sweat-drop 0.6s ease-in infinite;
   }
+
+  /* Frightened particle burst animation */
+  @keyframes frightened-particle {
+    0% {
+      transform: scale(0) translate(0, 0);
+      opacity: 0;
+    }
+    30% {
+      transform: scale(1.2) translate(var(--tx, 10px), var(--ty, -10px));
+      opacity: 0.8;
+    }
+    100% {
+      transform: scale(0) translate(calc(var(--tx, 10px) * 2), calc(var(--ty, -10px) * 2));
+      opacity: 0;
+    }
+  }
+
+  .animate-frightened-particle {
+    --tx: calc((var(--i, 0) - 3) * 8px);
+    --ty: calc((var(--i, 0) - 3) * -6px);
+    animation: frightened-particle 0.4s ease-out forwards;
+  }
+
+  .animate-frightened-particle:nth-child(1) { --tx: -12px; --ty: -8px; }
+  .animate-frightened-particle:nth-child(2) { --tx: -6px; --ty: -14px; }
+  .animate-frightened-particle:nth-child(3) { --tx: 6px; --ty: -14px; }
+  .animate-frightened-particle:nth-child(4) { --tx: 12px; --ty: -8px; }
+  .animate-frightened-particle:nth-child(5) { --tx: 10px; --ty: 4px; }
+  .animate-frightened-particle:nth-child(6) { --tx: -10px; --ty: 4px; }
 }

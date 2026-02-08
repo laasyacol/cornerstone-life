@@ -49,28 +49,57 @@
    }
  }
  
- // Generate a flee/whoosh sound
- export function playFleeSound() {
-   try {
-     const ctx = getAudioContext();
-     const now = ctx.currentTime;
-     
-     const osc = ctx.createOscillator();
-     const gain = ctx.createGain();
-     
-     osc.connect(gain);
-     gain.connect(ctx.destination);
-     
-     osc.type = 'sine';
-     osc.frequency.setValueAtTime(400, now);
-     osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
-     
-     gain.gain.setValueAtTime(0.05, now);
-     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-     
-     osc.start(now);
-     osc.stop(now + 0.35);
-   } catch (e) {
-     console.log('Audio not available');
-   }
- }
+// Generate a flee/whoosh sound
+export function playFleeSound() {
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+    
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(400, now);
+    osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
+    
+    gain.gain.setValueAtTime(0.05, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    
+    osc.start(now);
+    osc.stop(now + 0.35);
+  } catch (e) {
+    console.log('Audio not available');
+  }
+}
+
+// Generate a tiny frightened squeak sound
+export function playSqueakSound() {
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+    
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    // High-pitched frightened squeak
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1200, now);
+    osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+    osc.frequency.exponentialRampToValueAtTime(1000, now + 0.12);
+    
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.04, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    
+    osc.start(now);
+    osc.stop(now + 0.18);
+  } catch (e) {
+    console.log('Audio not available');
+  }
+}
