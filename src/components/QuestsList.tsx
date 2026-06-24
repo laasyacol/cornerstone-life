@@ -21,6 +21,8 @@ export function QuestsList({ quests, onRefresh }: QuestsListProps) {
 
   const activeQuests = quests.filter(q => q.status === 'active');
   const completedQuests = quests.filter(q => q.status === 'completed' || q.status === 'late-valid');
+  const failedQuests = quests.filter(q => q.status === 'failed');
+  const countFor = (cat: QuestCategory) => quests.filter(q => q.category === cat).length;
 
   return (
     <div className="space-y-6">
@@ -36,7 +38,7 @@ export function QuestsList({ quests, onRefresh }: QuestsListProps) {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 items-center">
         <button
           onClick={() => setStatusFilter('all')}
           className={`quest-badge transition-all ${
@@ -45,7 +47,7 @@ export function QuestsList({ quests, onRefresh }: QuestsListProps) {
               : 'bg-secondary text-secondary-foreground hover:bg-primary/10'
           }`}
         >
-          All
+          All <span className="ml-1 opacity-70">{quests.length}</span>
         </button>
         <button
           onClick={() => setStatusFilter('active')}
@@ -55,7 +57,7 @@ export function QuestsList({ quests, onRefresh }: QuestsListProps) {
               : 'bg-secondary text-secondary-foreground hover:bg-accent/10'
           }`}
         >
-          Active
+          Active <span className="ml-1 opacity-70">{activeQuests.length}</span>
         </button>
         <button
           onClick={() => setStatusFilter('completed')}
@@ -65,8 +67,20 @@ export function QuestsList({ quests, onRefresh }: QuestsListProps) {
               : 'bg-secondary text-secondary-foreground hover:bg-quest-skill/10'
           }`}
         >
-          Completed
+          Completed <span className="ml-1 opacity-70">{completedQuests.length}</span>
         </button>
+        {failedQuests.length > 0 && (
+          <button
+            onClick={() => setStatusFilter('failed')}
+            className={`quest-badge transition-all ${
+              statusFilter === 'failed'
+                ? 'bg-destructive text-destructive-foreground'
+                : 'bg-secondary text-secondary-foreground hover:bg-destructive/10'
+            }`}
+          >
+            Failed <span className="ml-1 opacity-70">{failedQuests.length}</span>
+          </button>
+        )}
         
         <div className="w-px bg-border mx-2" />
         
@@ -81,7 +95,7 @@ export function QuestsList({ quests, onRefresh }: QuestsListProps) {
           All Types
         </button>
         {(Object.entries(CATEGORY_INFO) as [QuestCategory, typeof CATEGORY_INFO[QuestCategory]][]).map(([key, { label, icon }]) => (
-          <button
+          countFor(key) > 0 && <button
             key={key}
             onClick={() => setFilter(key)}
             className={`quest-badge transition-all ${
@@ -90,9 +104,17 @@ export function QuestsList({ quests, onRefresh }: QuestsListProps) {
                 : 'bg-secondary text-secondary-foreground hover:bg-primary/10'
             }`}
           >
-            {icon} {label}
+            {icon} {label} <span className="ml-1 opacity-70">{countFor(key)}</span>
           </button>
         ))}
+        {(filter !== 'all' || statusFilter !== 'all') && (
+          <button
+            onClick={() => { setFilter('all'); setStatusFilter('all'); }}
+            className="quest-badge bg-transparent text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+          >
+            Clear filters
+          </button>
+        )}
       </div>
 
       {/* Quest Cards */}
@@ -108,8 +130,9 @@ export function QuestsList({ quests, onRefresh }: QuestsListProps) {
             </div>
           ))
         ) : (
-          <div className="stat-card text-center py-12">
-            <p className="text-muted-foreground">No quests match your filters</p>
+          <div className="stat-card text-center py-16 border-dashed">
+            <p className="font-serif text-lg text-foreground mb-1">Nothing in this corner</p>
+            <p className="text-sm text-muted-foreground">Try a different filter, or forge a new quest.</p>
           </div>
         )}
       </div>
