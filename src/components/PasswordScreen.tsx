@@ -54,8 +54,12 @@ export function PasswordScreen({ onUnlock }: PasswordScreenProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
-      <div className={`text-center space-y-6 ${shake ? 'animate-shake' : ''}`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background overflow-hidden">
+      {/* Soft ambient backdrop */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_hsl(var(--primary)/0.08),_transparent_60%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,_hsl(var(--primary)/0.05),_transparent_70%)]" />
+
+      <div className={`relative text-center space-y-6 px-8 py-10 rounded-2xl border border-border/60 bg-card/40 backdrop-blur-sm shadow-2xl ${shake ? 'animate-shake' : ''}`}>
         {/* Avatar with lock */}
         <div className="relative mx-auto w-24 h-24">
           <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-primary shadow-xl">
@@ -96,7 +100,12 @@ export function PasswordScreen({ onUnlock }: PasswordScreenProps) {
           />
           
           {error && (
-            <p className="text-sm text-destructive">Incorrect password</p>
+            <p className="text-sm text-destructive">
+              Incorrect password
+              {failedAttempts > 0 && failedAttempts < 3 && (
+                <span className="text-muted-foreground"> · hint in {3 - failedAttempts} {3 - failedAttempts === 1 ? 'try' : 'tries'}</span>
+              )}
+            </p>
           )}
 
           {showHint && (
@@ -118,6 +127,20 @@ export function PasswordScreen({ onUnlock }: PasswordScreenProps) {
             {isVerifying ? 'Verifying...' : 'Unlock'}
           </button>
         </form>
+
+        {/* Attempt indicator dots */}
+        <div className="flex items-center justify-center gap-1.5 pt-1" aria-label="Failed attempts">
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                i < failedAttempts
+                  ? 'w-6 bg-destructive/70'
+                  : 'w-3 bg-muted'
+              }`}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Smudge companion */}
