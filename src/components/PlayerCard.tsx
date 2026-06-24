@@ -11,6 +11,11 @@ export function PlayerCard({ annualPoints, legacyPoints }: PlayerCardProps) {
   const daysToLevel = daysUntilLevelUp();
   const maxPoints = 365000;
   const progressPercent = (annualPoints / maxPoints) * 100;
+  const dayOfYear = Math.floor(
+    (new Date().getTime() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
+  );
+  const expectedPercent = (dayOfYear / 365) * 100;
+  const pace = progressPercent - expectedPercent;
 
   return (
     <div className="stat-card relative overflow-hidden">
@@ -61,12 +66,28 @@ export function PlayerCard({ annualPoints, legacyPoints }: PlayerCardProps) {
       <div className="mt-5">
         <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
           <span>Annual Progress</span>
-          <span>{progressPercent.toFixed(1)}% of {maxPoints.toLocaleString()}</span>
+          <span className="flex items-center gap-2">
+            {progressPercent.toFixed(1)}% of {maxPoints.toLocaleString()}
+            <span
+              className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                pace >= 0 ? 'bg-quest-skill/15 text-quest-skill' : 'bg-destructive/15 text-destructive'
+              }`}
+              title="Pace vs. expected for today"
+            >
+              {pace >= 0 ? '▲' : '▼'} {Math.abs(pace).toFixed(1)}%
+            </span>
+          </span>
         </div>
-        <div className="h-2 bg-muted rounded-full overflow-hidden">
-          <div 
+        <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+          <div
             className="h-full burgundy-gradient transition-all duration-500 ease-out rounded-full"
             style={{ width: `${Math.min(progressPercent, 100)}%` }}
+          />
+          {/* Expected-pace marker */}
+          <div
+            className="absolute top-0 bottom-0 w-px bg-accent/70"
+            style={{ left: `${Math.min(expectedPercent, 100)}%` }}
+            title={`Today's pace: ${expectedPercent.toFixed(1)}%`}
           />
         </div>
       </div>

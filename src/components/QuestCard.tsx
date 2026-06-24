@@ -85,9 +85,19 @@ export function QuestCard({ quest, onUpdate }: QuestCardProps) {
             <span className={`quest-badge ${categoryColors[quest.category]}`}>
               {categoryInfo.icon} {categoryInfo.label}
             </span>
+            {quest.status === 'active' && daysLeft === 0 && (
+              <span className="quest-badge bg-destructive/20 text-destructive animate-pulse">
+                Due today
+              </span>
+            )}
             {quest.status === 'active' && daysLeft <= 2 && daysLeft > 0 && (
               <span className="quest-badge bg-mood-heavy-light/20 text-mood-heavy-medium">
                 {daysLeft}d left
+              </span>
+            )}
+            {quest.status === 'active' && daysLeft < 0 && (
+              <span className="quest-badge bg-destructive/15 text-destructive">
+                Overdue
               </span>
             )}
           </div>
@@ -128,6 +138,23 @@ export function QuestCard({ quest, onUpdate }: QuestCardProps) {
             <p className="mt-2 text-xs text-muted-foreground italic">
               Reason: {quest.reason}
             </p>
+          )}
+
+          {quest.status === 'active' && daysLeft >= 0 && daysLeft <= 7 && (
+            <div className="mt-3">
+              <div className="h-1 bg-muted rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    daysLeft === 0
+                      ? 'bg-destructive'
+                      : daysLeft <= 2
+                      ? 'bg-mood-heavy-medium'
+                      : 'bg-accent'
+                  }`}
+                  style={{ width: `${Math.max(10, ((7 - daysLeft) / 7) * 100)}%` }}
+                />
+              </div>
+            </div>
           )}
         </div>
 
