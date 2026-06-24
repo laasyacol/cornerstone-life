@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Lock } from 'lucide-react';
+import { Lock, Lightbulb } from 'lucide-react';
 import { verifyPassword } from '@/lib/passwordUtils';
 import playerAvatar from '@/assets/player-avatar.jpg';
 import { Smudge } from '@/components/Smudge';
@@ -15,6 +15,8 @@ export function PasswordScreen({ onUnlock }: PasswordScreenProps) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [passwordResult, setPasswordResult] = useState<'none' | 'success' | 'failure'>('none');
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [showHint, setShowHint] = useState(false);
 
   // Reset password result after animation
   useEffect(() => {
@@ -43,6 +45,11 @@ export function PasswordScreen({ onUnlock }: PasswordScreenProps) {
       setShake(true);
       setTimeout(() => setShake(false), 500);
       setPassword('');
+      setFailedAttempts((prev) => {
+        const next = prev + 1;
+        if (next >= 3) setShowHint(true);
+        return next;
+      });
     }
   };
 
@@ -91,7 +98,17 @@ export function PasswordScreen({ onUnlock }: PasswordScreenProps) {
           {error && (
             <p className="text-sm text-destructive">Incorrect password</p>
           )}
-          
+
+          {showHint && (
+            <div className="flex items-start gap-2 px-4 py-3 bg-primary/10 border border-primary/30 rounded-lg text-left animate-fade-in">
+              <Lightbulb className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-xs font-medium text-primary">Hint</p>
+                <p className="text-sm text-foreground">ur name 240</p>
+              </div>
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={isVerifying}
