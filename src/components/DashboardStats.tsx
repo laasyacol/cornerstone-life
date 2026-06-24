@@ -52,14 +52,19 @@ export function DashboardStats({ quests, annualPoints }: DashboardStatsProps) {
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      {stats.map(({ label, value, icon: Icon, color, bgColor }) => (
-        <div key={label} className="stat-card">
+      {stats.map(({ label, value, icon: Icon, color, bgColor }, i) => (
+        <div
+          key={label}
+          className="stat-card group relative overflow-hidden animate-fade-in"
+          style={{ animationDelay: `${i * 60}ms` }}
+        >
+          <div className={`absolute inset-x-0 bottom-0 h-0.5 ${bgColor} opacity-60 group-hover:opacity-100 transition-opacity`} />
           <div className="flex items-start justify-between">
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">{label}</p>
               <p className={`font-serif text-2xl ${color}`}>{value}</p>
             </div>
-            <div className={`w-10 h-10 rounded-lg ${bgColor} flex items-center justify-center`}>
+            <div className={`w-10 h-10 rounded-lg ${bgColor} flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}>
               <Icon className={`w-5 h-5 ${color}`} />
             </div>
           </div>
