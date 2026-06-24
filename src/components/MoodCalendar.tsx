@@ -69,16 +69,19 @@ export function MoodCalendar({ moods, year, month }: MoodCalendarProps) {
                 className={`
                   mood-tile w-full aspect-square rounded
                   ${mood ? moodColors[mood] : 'bg-muted/50'}
-                  ${isToday ? 'ring-2 ring-primary ring-offset-1' : ''}
+                  ${isToday ? 'ring-2 ring-accent ring-offset-1 ring-offset-card shadow-[0_0_10px_hsl(var(--accent)/0.5)]' : ''}
                 `}
               />
               
               {/* Tooltip */}
-              {hoveredDay === dateStr && mood && (
+              {hoveredDay === dateStr && (
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-20 animate-fade-in">
                   <div className="bg-popover text-popover-foreground text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap border border-border">
-                    <p className="font-medium">{MOOD_INFO[mood].label}</p>
-                    <p className="text-muted-foreground">Day {day}</p>
+                    <p className="font-medium">
+                      {mood ? MOOD_INFO[mood].label : 'No entry'}
+                      {isToday && <span className="ml-1 text-accent">· Today</span>}
+                    </p>
+                    <p className="text-muted-foreground">{monthName} {day}</p>
                   </div>
                 </div>
               )}

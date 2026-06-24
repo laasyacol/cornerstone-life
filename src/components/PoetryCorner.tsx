@@ -20,6 +20,8 @@ function PoemCard({ poem, index, onUpdate }: PoemCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(poem.title);
   const [editContent, setEditContent] = useState(poem.content);
+  const wordCount = poem.content.trim().split(/\s+/).filter(Boolean).length;
+  const lineCount = poem.content.split('\n').filter(l => l.trim()).length;
 
   const saveEdit = () => {
     const data = loadCornerstoneData();
@@ -81,6 +83,8 @@ function PoemCard({ poem, index, onUpdate }: PoemCardProps) {
                 year: 'numeric' 
               })}
             </time>
+            <span className="mx-1 opacity-60">·</span>
+            <span className="text-xs">{lineCount} lines · {wordCount} words</span>
           </div>
         </div>
 
@@ -141,6 +145,10 @@ function PoemCard({ poem, index, onUpdate }: PoemCardProps) {
 }
 
 export function PoetryCorner({ poems, onRefresh }: PoetryCornerProps) {
+  const totalWords = poems.reduce(
+    (sum, p) => sum + p.content.trim().split(/\s+/).filter(Boolean).length,
+    0
+  );
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -151,7 +159,9 @@ export function PoetryCorner({ poems, onRefresh }: PoetryCornerProps) {
           </div>
           <div>
             <h2 className="font-serif text-2xl text-foreground">Poetry Corner</h2>
-            <p className="text-sm text-muted-foreground">{poems.length} poems in archive</p>
+            <p className="text-sm text-muted-foreground">
+              {poems.length} {poems.length === 1 ? 'poem' : 'poems'} · {totalWords.toLocaleString()} words archived
+            </p>
           </div>
         </div>
         <PoemCreator onPoemCreated={onRefresh} />
