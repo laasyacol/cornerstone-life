@@ -30,6 +30,10 @@ export function saveCornerstoneData(data: Partial<CornerstoneData>): void {
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
     console.log('Cornerstone data saved:', updated.lastUpdated);
+    // Broadcast for live UI subscribers (YearlyStats, etc.)
+    try {
+      window.dispatchEvent(new CustomEvent('cornerstone-updated', { detail: { at: updated.lastUpdated } }));
+    } catch {}
   } catch (error) {
     console.error('Failed to save cornerstone data:', error);
   }

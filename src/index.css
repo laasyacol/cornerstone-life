@@ -525,3 +525,14 @@
   .animate-frightened-particle:nth-child(5) { --tx: 10px; --ty: 4px; }
   .animate-frightened-particle:nth-child(6) { --tx: -10px; --ty: 4px; }
 }
+
+/* ─────────── Poetry search highlighting ─────────── */
+mark.search-match {
+  transition: background-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+}
+mark.search-match.search-match-active {
+  background-color: hsl(var(--accent) / 0.85) !important;
+  color: hsl(var(--accent-foreground));
+  box-shadow: 0 0 0 2px hsl(var(--accent) / 0.5), 0 4px 14px hsl(var(--accent) / 0.35);
+  transform: translateY(-1px);
+}

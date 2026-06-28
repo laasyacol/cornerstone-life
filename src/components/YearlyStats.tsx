@@ -4,7 +4,8 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend 
 } from 'recharts';
-import { Trophy, TrendingUp, TrendingDown, Zap, Feather, Flame, Target } from 'lucide-react';
+import { Trophy, TrendingUp, TrendingDown, Zap, Feather, Flame, Target, RefreshCw } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
 interface YearlyStatsProps {
   year?: number;
@@ -29,7 +30,35 @@ const CATEGORY_COLORS: Record<QuestCategory, string> = {
 };
 
 export function YearlyStats({ year = 2026 }: YearlyStatsProps) {
-  const data = generateYearlyData(year);
+  const [tick, setTick] = useState(0);
+  const [lastSync, setLastSync] = useState<Date>(new Date());
+  const [spinning, setSpinning] = useState(false);
+
+  const data = useMemo(() => generateYearlyData(year), [year, tick]);
+
+  const refresh = () => {
+    setSpinning(true);
+    setTick(t => t + 1);
+    setLastSync(new Date());
+    setTimeout(() => setSpinning(false), 600);
+  };
+
+  // Live updates: re-render when cornerstone data changes anywhere in app
+  useEffect(() => {
+    const onUpdate = () => {
+      setTick(t => t + 1);
+      setLastSync(new Date());
+    };
+    window.addEventListener('cornerstone-updated', onUpdate);
+    window.addEventListener('storage', onUpdate);
+    // Also refresh when tab regains focus
+    window.addEventListener('focus', onUpdate);
+    return () => {
+      window.removeEventListener('cornerstone-updated', onUpdate);
+      window.removeEventListener('storage', onUpdate);
+      window.removeEventListener('focus', onUpdate);
+    };
+  }, []);
 
   // Prepare chart data
   const pointsChartData = data.monthlyStats.map(m => ({
@@ -67,11 +96,26 @@ export function YearlyStats({ year = 2026 }: YearlyStatsProps) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-serif text-3xl text-foreground">{year} Year in Review</h2>
-          <p className="text-muted-foreground mt-1">Complete statistical overview of your journey</p>
+          <p className="text-muted-foreground mt-1">
+            Complete statistical overview of your journey
+            <span className="ml-2 text-xs opacity-70">
+              · Synced {lastSync.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+          </p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-accent/10 rounded-lg">
-          <Trophy className="w-5 h-5 text-accent" />
-          <span className="font-serif text-xl text-accent">Level 20 → 21</span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={refresh}
+            className="flex items-center gap-2 px-3 py-2 bg-secondary hover:bg-primary/10 text-foreground rounded-lg text-sm transition-colors border border-border"
+            title="Refresh stats"
+          >
+            <RefreshCw className={`w-4 h-4 ${spinning ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+          <div className="flex items-center gap-2 px-4 py-2 bg-accent/10 rounded-lg">
+            <Trophy className="w-5 h-5 text-accent" />
+            <span className="font-serif text-xl text-accent">Level 20 → 21</span>
+          </div>
         </div>
       </div>
 

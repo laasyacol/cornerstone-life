@@ -1,9 +1,68 @@
 import { Poem } from '@/lib/gameData';
-import { Feather, Calendar, Pencil, Check, X, Trash2, Search, ArrowUpDown, BookOpen, ArrowUp } from 'lucide-react';
+import { Feather, Calendar, Pencil, Check, X, Trash2, Search, ArrowUpDown, BookOpen, ArrowUp, Eye, Maximize2, Minus, Plus, ChevronUp, ChevronDown } from 'lucide-react';
 import { formatPoemContent } from '@/lib/formatPoem';
 import { PoemCreator } from './PoemCreator';
-import { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { loadCornerstoneData, saveCornerstoneData } from '@/lib/storage';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Search-highlight helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Wrap matches in <mark className="search-match" />. Each match gets a stable
+ * data-match-id used by the parent for prev/next navigation & active styling.
+ */
+function highlight(text: string, query: string, idPrefix: string): React.ReactNode {
+  if (!query) return text;
+  const q = query.toLowerCase();
+  const lower = text.toLowerCase();
+  const out: React.ReactNode[] = [];
+  let i = 0;
+  let n = 0;
+  while (i < text.length) {
+    const hit = lower.indexOf(q, i);
+    if (hit === -1) {
+      out.push(text.slice(i));
+      break;
+    }
+    if (hit > i) out.push(text.slice(i, hit));
+    out.push(
+      <mark
+        key={`${idPrefix}-${n}`}
+        data-match-id={`${idPrefix}-${n}`}
+        className="search-match bg-accent/40 text-foreground rounded-sm px-0.5"
+      >
+        {text.slice(hit, hit + q.length)}
+      </mark>
+    );
+    i = hit + q.length;
+    n++;
+  }
+  return <>{out}</>;
+}
+
+function countMatches(text: string, query: string): number {
+  if (!query) return 0;
+  const q = query.toLowerCase();
+  const lower = text.toLowerCase();
+  let c = 0, i = 0;
+  while ((i = lower.indexOf(q, i)) !== -1) { c++; i += q.length; }
+  return c;
+}
+
+/** Render poem content preserving line breaks and italics, with optional highlight. */
+function renderPoemBody(content: string, query: string, idPrefix: string): React.ReactNode {
+  if (!query) return formatPoemContent(content);
+  // Highlight overrides italic formatting while searching for clarity.
+  return content.split('\n').map((line, i) => (
+    <React.Fragment key={i}>
+      {highlight(line, query, `${idPrefix}-l${i}`)}
+      {'\n'}
+    </React.Fragment>
+  ));
+}
 
 interface PoetryCornerProps {
   poems: Poem[];
@@ -14,29 +73,52 @@ interface PoemCardProps {
   poem: Poem;
   index: number;
   onUpdate?: () => void;
+  query?: string;
+  onOpenViewer?: (poem: Poem) => void;
 }
 
-function PoemCard({ poem, index, onUpdate }: PoemCardProps) {
+function PoemCard({ poem, index, onUpdate, query = '', onOpenViewer }: PoemCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(poem.title);
   const [editContent, setEditContent] = useState(poem.content);
+  const [editStatus, setEditStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [showEditPreview, setShowEditPreview] = useState(true);
+  const editDebounce = useRef<number | null>(null);
+
   const wordCount = poem.content.trim().split(/\s+/).filter(Boolean).length;
   const lineCount = poem.content.split('\n').filter(l => l.trim()).length;
   const readMinutes = Math.max(1, Math.round(wordCount / 180));
 
-  const saveEdit = () => {
+  const persistEdit = useCallback((title: string, content: string) => {
     const data = loadCornerstoneData();
     if (!data?.poems) return;
-
-    const updatedPoems = data.poems.map(p => {
-      if (p.id === poem.id) {
-        return { ...p, title: editTitle, content: editContent };
-      }
-      return p;
-    });
-
+    const updatedPoems = data.poems.map(p =>
+      p.id === poem.id ? { ...p, title, content } : p
+    );
     saveCornerstoneData({ poems: updatedPoems });
+  }, [poem.id]);
+
+  // Autosave edits debounced
+  useEffect(() => {
+    if (!isEditing) return;
+    if (editTitle === poem.title && editContent === poem.content) return;
+    setEditStatus('saving');
+    if (editDebounce.current) window.clearTimeout(editDebounce.current);
+    editDebounce.current = window.setTimeout(() => {
+      persistEdit(editTitle, editContent);
+      setEditStatus('saved');
+      onUpdate?.();
+    }, 700);
+    return () => {
+      if (editDebounce.current) window.clearTimeout(editDebounce.current);
+    };
+  }, [editTitle, editContent, isEditing, persistEdit, onUpdate, poem.title, poem.content]);
+
+  const finishEdit = () => {
+    if (editDebounce.current) window.clearTimeout(editDebounce.current);
+    persistEdit(editTitle, editContent);
     setIsEditing(false);
+    setEditStatus('idle');
     onUpdate?.();
   };
 
@@ -44,6 +126,7 @@ function PoemCard({ poem, index, onUpdate }: PoemCardProps) {
     setEditTitle(poem.title);
     setEditContent(poem.content);
     setIsEditing(false);
+    setEditStatus('idle');
   };
 
   const deletePoem = () => {
@@ -56,6 +139,8 @@ function PoemCard({ poem, index, onUpdate }: PoemCardProps) {
     saveCornerstoneData({ poems: updatedPoems });
     onUpdate?.();
   };
+
+  const idPrefix = `poem-${poem.id}`;
 
   return (
     <article
@@ -76,7 +161,9 @@ function PoemCard({ poem, index, onUpdate }: PoemCardProps) {
               autoFocus
             />
           ) : (
-            <h3 className="font-serif text-xl text-foreground">{poem.title}</h3>
+            <h3 className="font-serif text-xl text-foreground">
+              {highlight(poem.title, query, `${idPrefix}-title`)}
+            </h3>
           )}
           <div className="flex items-center gap-1.5 mt-1 text-sm text-muted-foreground">
             <Calendar className="w-3.5 h-3.5" />
@@ -95,13 +182,26 @@ function PoemCard({ poem, index, onUpdate }: PoemCardProps) {
         </div>
 
         {/* Action buttons */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
           {isEditing ? (
             <>
+              <span className="text-[10px] text-muted-foreground mr-1">
+                {editStatus === 'saving' && 'Saving…'}
+                {editStatus === 'saved' && (
+                  <span className="text-quest-skill">Saved ✓</span>
+                )}
+              </span>
               <button
-                onClick={saveEdit}
+                onClick={() => setShowEditPreview(p => !p)}
+                className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground transition-colors"
+                title={showEditPreview ? 'Hide preview' : 'Show preview'}
+              >
+                <Eye className="w-4 h-4" />
+              </button>
+              <button
+                onClick={finishEdit}
                 className="p-1.5 rounded-md hover:bg-quest-skill/20 text-quest-skill transition-colors"
-                title="Save"
+                title="Done"
               >
                 <Check className="w-4 h-4" />
               </button>
@@ -115,6 +215,15 @@ function PoemCard({ poem, index, onUpdate }: PoemCardProps) {
             </>
           ) : (
             <>
+              {onOpenViewer && (
+                <button
+                  onClick={() => onOpenViewer(poem)}
+                  className="p-1.5 rounded-md hover:bg-accent/20 text-accent transition-colors"
+                  title="Read in viewer mode"
+                >
+                  <Maximize2 className="w-4 h-4" />
+                </button>
+              )}
               <button
                 onClick={() => setIsEditing(true)}
                 className="p-1.5 rounded-md hover:bg-primary/20 text-primary transition-colors"
@@ -135,15 +244,27 @@ function PoemCard({ poem, index, onUpdate }: PoemCardProps) {
       </header>
       
       {isEditing ? (
-        <textarea
-          value={editContent}
-          onChange={(e) => setEditContent(e.target.value)}
-          className="w-full bg-background border border-border rounded px-3 py-2 font-serif text-foreground leading-relaxed focus:outline-none focus:ring-1 focus:ring-primary min-h-[200px]"
-          rows={10}
-        />
+        <div className={`grid gap-3 ${showEditPreview ? 'lg:grid-cols-2' : 'grid-cols-1'}`}>
+          <textarea
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            className="w-full bg-background border border-border rounded px-3 py-2 font-serif text-foreground leading-relaxed focus:outline-none focus:ring-1 focus:ring-primary min-h-[220px]"
+            rows={10}
+          />
+          {showEditPreview && (
+            <div className="border border-dashed border-border rounded-lg p-4 bg-card/60 min-h-[220px]">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Live preview</p>
+              <div className="font-serif text-foreground leading-relaxed whitespace-pre-wrap poem-body">
+                {editContent
+                  ? formatPoemContent(editContent)
+                  : <span className="text-muted-foreground italic">Empty…</span>}
+              </div>
+            </div>
+          )}
+        </div>
       ) : (
         <div className="font-serif text-foreground leading-relaxed whitespace-pre-wrap poem-body">
-          {formatPoemContent(poem.content)}
+          {renderPoemBody(poem.content, query, `${idPrefix}-body`)}
         </div>
       )}
 
@@ -158,6 +279,10 @@ export function PoetryCorner({ poems, onRefresh }: PoetryCornerProps) {
   const [query, setQuery] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'title'>('newest');
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [viewerPoem, setViewerPoem] = useState<Poem | null>(null);
+  const [viewerFontSize, setViewerFontSize] = useState(20); // px
+  const [matchIndex, setMatchIndex] = useState(0);
+  const [matchCount, setMatchCount] = useState(0);
 
   useEffect(() => {
     const onScroll = () => setShowScrollTop(window.scrollY > 400);
@@ -190,6 +315,41 @@ export function PoetryCorner({ poems, onRefresh }: PoetryCornerProps) {
     return base;
   }, [poems, query, sortBy]);
 
+  // Recount matches after render whenever query/filter changes
+  useEffect(() => {
+    if (!query.trim()) {
+      setMatchCount(0);
+      setMatchIndex(0);
+      return;
+    }
+    // Defer to allow DOM update
+    const id = window.setTimeout(() => {
+      const nodes = document.querySelectorAll<HTMLElement>('mark.search-match');
+      setMatchCount(nodes.length);
+      setMatchIndex(nodes.length ? 0 : 0);
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [query, filtered]);
+
+  // Highlight active match & scroll to it
+  useEffect(() => {
+    if (!query.trim() || matchCount === 0) return;
+    const nodes = document.querySelectorAll<HTMLElement>('mark.search-match');
+    nodes.forEach((n, i) => {
+      if (i === matchIndex) {
+        n.classList.add('search-match-active');
+        n.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        n.classList.remove('search-match-active');
+      }
+    });
+  }, [matchIndex, matchCount, query]);
+
+  const gotoMatch = (delta: number) => {
+    if (matchCount === 0) return;
+    setMatchIndex(i => (i + delta + matchCount) % matchCount);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -216,7 +376,10 @@ export function PoetryCorner({ poems, onRefresh }: PoetryCornerProps) {
             <input
               type="text"
               value={query}
-              onChange={e => setQuery(e.target.value)}
+              onChange={e => { setQuery(e.target.value); setMatchIndex(0); }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') { e.preventDefault(); gotoMatch(e.shiftKey ? -1 : 1); }
+              }}
               placeholder="Search by title or line…"
               className="w-full pl-9 pr-9 py-2 bg-card border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all"
             />
@@ -230,6 +393,32 @@ export function PoetryCorner({ poems, onRefresh }: PoetryCornerProps) {
               </button>
             )}
           </div>
+
+          {/* Prev / next match navigation */}
+          {query.trim() && (
+            <div className="flex items-center gap-1 bg-card border border-border rounded-lg px-1 py-1">
+              <button
+                onClick={() => gotoMatch(-1)}
+                disabled={matchCount === 0}
+                className="p-1 rounded hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed text-foreground"
+                title="Previous match (Shift+Enter)"
+              >
+                <ChevronUp className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => gotoMatch(1)}
+                disabled={matchCount === 0}
+                className="p-1 rounded hover:bg-secondary disabled:opacity-30 disabled:cursor-not-allowed text-foreground"
+                title="Next match (Enter)"
+              >
+                <ChevronDown className="w-4 h-4" />
+              </button>
+              <span className="text-xs text-muted-foreground tabular-nums px-2">
+                {matchCount === 0 ? '0 / 0' : `${matchIndex + 1} / ${matchCount}`}
+              </span>
+            </div>
+          )}
+
           <div className="flex items-center gap-2 text-sm">
             <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
             {(['newest', 'oldest', 'title'] as const).map(opt => (
@@ -284,7 +473,14 @@ export function PoetryCorner({ poems, onRefresh }: PoetryCornerProps) {
       <div className="space-y-6">
         {filtered.length > 0 ? (
           filtered.map((poem, index) => (
-            <PoemCard key={poem.id} poem={poem} index={index} onUpdate={onRefresh} />
+            <PoemCard
+              key={poem.id}
+              poem={poem}
+              index={index}
+              onUpdate={onRefresh}
+              query={query.trim()}
+              onOpenViewer={(p) => setViewerPoem(p)}
+            />
           ))
         ) : (
           <div className="stat-card text-center py-16 border-dashed">
@@ -310,6 +506,57 @@ export function PoetryCorner({ poems, onRefresh }: PoetryCornerProps) {
           <ArrowUp className="w-5 h-5" />
         </button>
       )}
+
+      {/* Viewer mode dialog */}
+      <Dialog open={!!viewerPoem} onOpenChange={(o) => { if (!o) setViewerPoem(null); }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+          {viewerPoem && (
+            <>
+              <DialogHeader>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <DialogTitle className="font-serif text-3xl text-foreground">
+                      {viewerPoem.title}
+                    </DialogTitle>
+                    <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
+                      <Calendar className="w-3.5 h-3.5" />
+                      {viewerPoem.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 bg-secondary rounded-lg p-1 mr-6">
+                    <button
+                      onClick={() => setViewerFontSize(s => Math.max(14, s - 2))}
+                      className="p-1.5 rounded hover:bg-background text-foreground"
+                      title="Smaller"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="text-xs text-muted-foreground tabular-nums w-10 text-center">
+                      {viewerFontSize}px
+                    </span>
+                    <button
+                      onClick={() => setViewerFontSize(s => Math.min(40, s + 2))}
+                      className="p-1.5 rounded hover:bg-background text-foreground"
+                      title="Larger"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </DialogHeader>
+              <div
+                className="overflow-y-auto pr-2 py-4 font-serif text-foreground leading-relaxed whitespace-pre-wrap poem-body"
+                style={{ fontSize: `${viewerFontSize}px`, lineHeight: 1.7 }}
+              >
+                {formatPoemContent(viewerPoem.content)}
+              </div>
+              <div className="pt-3 border-t border-border text-center" aria-hidden>
+                <span className="text-accent/50 tracking-[0.5em] text-sm select-none">❦ ❦ ❦</span>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
