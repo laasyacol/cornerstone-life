@@ -1,48 +1,25 @@
-// Smudge State Machine Types
+export type SmudgeState =
+  | 'IDLE' | 'WATCHING' | 'HIDING' | 'PEEKING'
+  | 'FLEEING' | 'GIGGLING' | 'BORED' | 'ANNOYED'
+  | 'SUCCESS' | 'DRAGGING_CURSOR';
 
-export type SmudgeState = 
-  | 'IDLE'
-  | 'WATCHING'
-  | 'HIDING'
-  | 'PEEKING'
-  | 'BORED'
-  | 'ANNOYED'
-  | 'SUCCESS'
-  | 'GIGGLING'
-  | 'FLEEING'
-  | 'DRAGGING_CURSOR';
-
-export interface SmudgePosition {
-  x: number;
-  y: number;
-}
-
-export interface SmudgeContext {
-  state: SmudgeState;
-  cursorPosition: SmudgePosition;
-  lastInteractionTime: number;
-  lastTypingTime: number;
-  isPasswordFocused: boolean;
-  passwordResult: 'none' | 'success' | 'failure';
-  isBeingChased: boolean;
-  cornerIndex: number;
-}
+export interface SmudgePosition { x: number; y: number; }
 
 export const STATE_TIMINGS = {
-  BORED_THRESHOLD: 6000,       // 6s inactivity → BORED
-  PEEK_THRESHOLD: 1200,        // 1.2s no typing → can peek
-  CURSOR_COOLDOWN: 15000,      // 15s between cursor interactions
-  ANNOYED_DURATION: 1500,      // Max 1.5s for ANNOYED state
-  CURSOR_IDLE_THRESHOLD: 4000, // 4s cursor idle for interaction
-  GIGGLE_DURATION: 2000,       // 2s giggle animation
-  FLEE_DURATION: 2200,         // 2.2s flee animation (tiptoe run)
-  CORNER_HOP_INTERVAL: 3000,   // 3s between corner hops when bored
+  FLEE_DURATION: 2800,
+  GIGGLE_DURATION: 1200,
+  ANNOYED_DURATION: 2000,
+  BORED_THRESHOLD: 12000,
+  PEEK_THRESHOLD: 2000,
+  CURSOR_IDLE_THRESHOLD: 4000,
+  CURSOR_COOLDOWN: 15000,
+  CORNER_HOP_INTERVAL: 1800,
 } as const;
 
-// Corner positions for hopping
+const PAD = 10;
 export const CORNER_POSITIONS = [
-  { corner: 'bottom-right', getPos: (w: number, h: number) => ({ x: w - 80, y: h - 80 }) },
-  { corner: 'bottom-left', getPos: (w: number, h: number) => ({ x: 20, y: h - 80 }) },
-  { corner: 'top-left', getPos: (w: number, h: number) => ({ x: 20, y: 80 }) },
-  { corner: 'top-right', getPos: (w: number, h: number) => ({ x: w - 80, y: 80 }) },
+  { getPos: (w: number, h: number) => ({ x: PAD, y: h - 70 }) },
+  { getPos: (w: number, h: number) => ({ x: w - 70, y: h - 70 }) },
+  { getPos: (_w: number, h: number) => ({ x: PAD, y: h / 2 - 30 }) },
+  { getPos: (w: number, h: number) => ({ x: w - 70, y: h / 2 - 30 }) },
 ] as const;

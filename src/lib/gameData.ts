@@ -3,8 +3,17 @@
 export const PLAYER = {
   name: "Laasya",
   dob: new Date(2005, 8, 16), // September 16, 2005
-  gameStart: new Date(2026, 0, 1), // January 1, 2026
+  gameStart: new Date(2026, 8, 16), // September 16, 2026 — journey start
 };
+
+// Fresh start begins at level 21
+export const STARTING_LEVEL = 21;
+
+// Days since the journey began (0 before start)
+export function daysSinceStart(): number {
+  const ms = Date.now() - PLAYER.gameStart.getTime();
+  return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
+}
 
 export const ANNUAL_BASE_POINTS = 365000;
 
@@ -70,7 +79,7 @@ export function calculateLevel(): number {
     age--;
   }
   
-  return age;
+  return Math.max(STARTING_LEVEL, age);
 }
 
 // Days until next level-up
