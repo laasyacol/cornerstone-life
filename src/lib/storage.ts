@@ -128,3 +128,25 @@ export function importCornerstoneData(file: File): Promise<CornerstoneData> {
     reader.readAsText(file);
   });
 }
+
+/**
+ * Reset all game progress (quests, moods, points, streaks) back to a fresh
+ * start while PRESERVING the poems archive.
+ */
+export function resetGameData(): CornerstoneData {
+  const existing = loadCornerstoneData();
+  const fresh: CornerstoneData = {
+    quests: [],
+    moods: [],
+    poems: existing?.poems ?? [],
+    annualPoints: 0,
+    legacyPoints: 0,
+    streaks: { dailyLog: 0, completion: 0, poetry: 0 },
+    lastUpdated: new Date().toISOString(),
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
+  try {
+    window.dispatchEvent(new CustomEvent('cornerstone-updated', { detail: { at: fresh.lastUpdated } }));
+  } catch {}
+  return fresh;
+}
