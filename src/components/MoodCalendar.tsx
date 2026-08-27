@@ -1,10 +1,13 @@
 import { DayMood, MoodState, MOOD_INFO } from '@/lib/gameData';
 import { useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface MoodCalendarProps {
   moods: DayMood[];
-  year: number;
-  month: number;
+  /** Initial year — defaults to the current year */
+  year?: number;
+  /** Initial month (0-indexed) — defaults to the current month */
+  month?: number;
 }
 
 const moodColors: Record<MoodState, string> = {
@@ -16,14 +19,25 @@ const moodColors: Record<MoodState, string> = {
 };
 
 export function MoodCalendar({ moods, year, month }: MoodCalendarProps) {
+  const now = new Date();
   const [hoveredDay, setHoveredDay] = useState<string | null>(null);
-  
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDayOfWeek = new Date(year, month, 1).getDay();
-  const monthName = new Date(year, month).toLocaleDateString('en-US', { month: 'long' });
-  
+  const [viewYear, setViewYear] = useState(year ?? now.getFullYear());
+  const [viewMonth, setViewMonth] = useState(month ?? now.getMonth());
+
+  const shiftMonth = (delta: number) => {
+    const d = new Date(viewYear, viewMonth + delta, 1);
+    setViewYear(d.getFullYear());
+    setViewMonth(d.getMonth());
+  };
+
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
+  const monthName = new Date(viewYear, viewMonth).toLocaleDateString('en-US', { month: 'long' });
+
+  const todayStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`;
+
   const getMoodForDay = (day: number): MoodState | null => {
-    const dateStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+    const dateStr = `${viewYear}-${(viewMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
     const found = moods.find(m => m.date === dateStr);
     return found?.mood || null;
   };
@@ -31,11 +45,39 @@ export function MoodCalendar({ moods, year, month }: MoodCalendarProps) {
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const emptyDays = Array.from({ length: firstDayOfWeek }, (_, i) => i);
 
+  const isCurrentMonth = viewYear === now.getFullYear() && viewMonth === now.getMonth();
+
   return (
     <div className="stat-card">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-serif text-xl text-foreground">{monthName} {year}</h3>
-        <span className="text-sm text-muted-foreground">Weather System</span>
+      <div className="flex items-center justify-between mb-4 gap-2">
+        <button
+          onClick={() => shiftMonth(-1)}
+          aria-label="Previous month"
+          className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+
+        <div className="text-center">
+          <h3 className="font-serif text-xl text-foreground leading-tight">{monthName} {viewYear}</h3>
+          {!isCurrentMonth && (
+            <button
+              onClick={() => { setViewYear(now.getFullYear()); setViewMonth(now.getMonth()); }}
+              className="text-[11px] text-accent hover:underline"
+            >
+              Jump to today
+            </button>
+          )}
+          {isCurrentMonth && <span className="text-[11px] text-muted-foreground">Weather System</span>}
+        </div>
+
+        <button
+          onClick={() => shiftMonth(1)}
+          aria-label="Next month"
+          className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Day labels */}
@@ -52,12 +94,12 @@ export function MoodCalendar({ moods, year, month }: MoodCalendarProps) {
         {emptyDays.map(i => (
           <div key={`empty-${i}`} className="w-full aspect-square" />
         ))}
-        
+
         {days.map(day => {
           const mood = getMoodForDay(day);
-          const dateStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-          const isToday = new Date().toISOString().split('T')[0] === dateStr;
-          
+          const dateStr = `${viewYear}-${(viewMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+          const isToday = todayStr === dateStr;
+
           return (
             <div
               key={day}
@@ -72,7 +114,7 @@ export function MoodCalendar({ moods, year, month }: MoodCalendarProps) {
                   ${isToday ? 'ring-2 ring-accent ring-offset-1 ring-offset-card shadow-[0_0_10px_hsl(var(--accent)/0.5)]' : ''}
                 `}
               />
-              
+
               {/* Tooltip */}
               {hoveredDay === dateStr && (
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-20 animate-fade-in">
