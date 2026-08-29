@@ -14,10 +14,395 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      accounting_accounts: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      accounting_categories: {
+        Row: {
+          created_at: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      accounting_expenses: {
+        Row: {
+          account_id: string | null
+          amount: number
+          category: string
+          created_at: string
+          description: string
+          expense_date: string
+          id: string
+          month_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          amount: number
+          category: string
+          created_at?: string
+          description: string
+          expense_date: string
+          id?: string
+          month_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number
+          category?: string
+          created_at?: string
+          description?: string
+          expense_date?: string
+          id?: string
+          month_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounting_expenses_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "account_balances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_expenses_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounting_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_expenses_category_fkey"
+            columns: ["category"]
+            isOneToOne: false
+            referencedRelation: "accounting_categories"
+            referencedColumns: ["name"]
+          },
+          {
+            foreignKeyName: "accounting_expenses_month_id_fkey"
+            columns: ["month_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_summary"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      accounting_incomes: {
+        Row: {
+          account_id: string | null
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          income_date: string
+          month_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_id?: string | null
+          amount: number
+          created_at?: string
+          description: string
+          id?: string
+          income_date: string
+          month_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          income_date?: string
+          month_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounting_incomes_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "account_balances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_incomes_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounting_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_incomes_month_id_fkey"
+            columns: ["month_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_summary"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      borrowers: {
+        Row: {
+          created_at: string
+          display_id: number
+          id: string
+          name: string
+          notes: string | null
+          phone_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_id: number
+          id?: string
+          name: string
+          notes?: string | null
+          phone_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_id?: number
+          id?: string
+          name?: string
+          notes?: string | null
+          phone_number?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cash_log: {
+        Row: {
+          amount: number
+          cash_date: string
+          category: string
+          created_at: string
+          description: string
+          id: string
+          purpose: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          cash_date: string
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          purpose?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          cash_date?: string
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          purpose?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_log_category_fkey"
+            columns: ["category"]
+            isOneToOne: false
+            referencedRelation: "accounting_categories"
+            referencedColumns: ["name"]
+          },
+        ]
+      }
+      loans_disbursed: {
+        Row: {
+          amount: number
+          borrower_id: string | null
+          category: string
+          created_at: string
+          description: string
+          disbursement_date: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          borrower_id?: string | null
+          category: string
+          created_at?: string
+          description: string
+          disbursement_date: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          borrower_id?: string | null
+          category?: string
+          created_at?: string
+          description?: string
+          disbursement_date?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loans_disbursed_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrower_balances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loans_disbursed_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      monthly_summary: {
+        Row: {
+          created_at: string
+          id: string
+          income: number
+          month: string
+          notes: string | null
+          saved: number | null
+          savings_goal: number | null
+          savings_percent: number | null
+          spent: number
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          income?: number
+          month: string
+          notes?: string | null
+          saved?: number | null
+          savings_goal?: number | null
+          savings_percent?: number | null
+          spent?: number
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          income?: number
+          month?: string
+          notes?: string | null
+          saved?: number | null
+          savings_goal?: number | null
+          savings_percent?: number | null
+          spent?: number
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      repayments_received: {
+        Row: {
+          amount: number
+          borrower_id: string | null
+          category: string
+          created_at: string
+          description: string
+          id: string
+          repayment_date: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          borrower_id?: string | null
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          repayment_date: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          borrower_id?: string | null
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          repayment_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repayments_received_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrower_balances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repayments_received_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "borrowers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      account_balances: {
+        Row: {
+          current_balance: number | null
+          id: string | null
+          name: string | null
+          total_expense: number | null
+          total_income: number | null
+        }
+        Relationships: []
+      }
+      borrower_balances: {
+        Row: {
+          display_id: number | null
+          id: string | null
+          name: string | null
+          outstanding: number | null
+          phone_number: string | null
+          total_lent: number | null
+          total_repaid: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
